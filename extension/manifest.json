@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "AI Phishing Shield",
+  "version": "1.0.0",
+  "description": "Real-time AI-powered phishing detection. Explains why sites are suspicious, identifies fake login forms, and predicts zero-day attacks using machine learning.",
+  "author": "AI Phishing Shield Team",
+
+  "icons": {
+    "16":  "icons/icon16.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "AI Phishing Shield"
+  },
+
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/overlay.js", "content/content.js"],
+      "css": ["content/overlay.css"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "webNavigation",
+    "scripting",
+    "alarms",
+    "notifications"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content/overlay.js",
+        "content/overlay.css",
+        "dashboard/index.html",
+        "dashboard/dashboard.css",
+        "dashboard/dashboard.js",
+        "dashboard/chart.umd.min.js",
+        "ml/model.json",
+        "ml/weights.bin",
+        "icons/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

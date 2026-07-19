@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Phishing Shield</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="popup.css"/>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════ HEADER -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon" id="logo-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L3 7V12C3 16.55 6.84 20.74 12 22C17.16 20.74 21 16.55 21 12V7L12 2Z"/>
+          <path d="M9 12L11 14L15 10"/>
+        </svg>
+      </div>
+      <div class="logo-text-wrap">
+        <span class="logo-name">AI Phishing Shield</span>
+        <span class="logo-status" id="logo-status">Scanning…</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" id="btn-dashboard" title="Open Dashboard" aria-label="Open full dashboard">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════ TAB NAV -->
+  <nav class="tab-nav" role="tablist">
+    <button class="tab-btn active" id="tab-scan"     data-tab="scan"     role="tab" aria-selected="true">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Scan
+    </button>
+    <button class="tab-btn" id="tab-stats"    data-tab="stats"    role="tab" aria-selected="false">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Stats
+    </button>
+    <button class="tab-btn" id="tab-lists"    data-tab="lists"    role="tab" aria-selected="false">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Lists
+    </button>
+    <button class="tab-btn" id="tab-settings" data-tab="settings" role="tab" aria-selected="false">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════ TAB: SCAN -->
+  <div id="panel-scan" class="tab-panel active" role="tabpanel">
+
+    <!-- Loading -->
+    <div id="state-loading" class="state-panel">
+      <div class="spinner-wrap">
+        <div class="spinner"></div>
+        <div class="spinner-ring"></div>
+      </div>
+      <p class="state-text">Analyzing site…</p>
+    </div>
+
+    <!-- Safe -->
+    <div id="state-safe" class="state-panel hidden">
+      <div class="score-ring-wrap safe">
+        <svg class="ring-svg" viewBox="0 0 120 120">
+          <circle class="ring-bg"   cx="60" cy="60" r="50"/>
+          <circle class="ring-fill" id="ring-fill-safe" cx="60" cy="60" r="50"
+            stroke-dasharray="314" stroke-dashoffset="314"/>
+        </svg>
+        <div class="ring-content">
+          <span class="score-num" id="score-num-safe">0</span>
+          <span class="score-lbl">Risk Score</span>
+        </div>
+      </div>
+      <div class="status-badge safe-badge"><span class="badge-dot"></span>Safe Site</div>
+      <div id="meta-pills-safe" class="meta-pills"></div>
+      <p class="site-url" id="url-safe"></p>
+    </div>
+
+    <!-- Danger -->
+    <div id="state-danger" class="state-panel hidden">
+      <div class="score-ring-wrap" id="danger-ring-wrap">
+        <svg class="ring-svg" viewBox="0 0 120 120">
+          <circle class="ring-bg"   cx="60" cy="60" r="50"/>
+          <circle class="ring-fill" id="ring-fill-danger" cx="60" cy="60" r="50"
+            stroke-dasharray="314" stroke-dashoffset="314"/>
+        </svg>
+        <div class="ring-content">
+          <span class="score-num" id="score-num-danger">0</span>
+          <span class="score-lbl">Risk Score</span>
+        </div>
+      </div>
+      <div class="status-badge" id="danger-badge"><span class="badge-dot"></span><span id="level-text">Suspicious</span></div>
+      <div id="meta-pills-danger" class="meta-pills"></div>
+      <p class="site-url" id="url-danger"></p>
+    </div>
+
+    <!-- No data -->
+    <div id="state-nodata" class="state-panel hidden">
+      <div class="no-data-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+      </div>
+      <p class="state-text">Navigate to a website<br/>to begin scanning.</p>
+    </div>
+
+    <!-- Flags panel -->
+    <div id="flags-panel" class="card-panel hidden">
+      <div class="card-header">
+        <span class="card-title">Why flagged?</span>
+        <span class="flags-count" id="flags-count">0 issues</span>
+      </div>
+      <ul class="flags-list" id="flags-list"></ul>
+    </div>
+
+    <!-- DOM analysis panel -->
+    <div id="dom-panel" class="card-panel hidden">
+      <div class="card-header">
+        <span class="card-title">Page Analysis</span>
+        <span class="dom-score-tag" id="dom-score-tag"></span>
+      </div>
+      <div class="dom-checks" id="dom-checks"></div>
+    </div>
+
+    <!-- Scan actions -->
+    <div class="scan-actions">
+      <button class="btn btn-ghost" id="btn-rescan">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        Rescan
+      </button>
+      <button class="btn btn-ghost" id="btn-allowlist">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/></svg>
+        Trust Site
+      </button>
+      <button class="btn btn-danger" id="btn-report">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Report
+      </button>
+    </div>
+
+  </div><!-- /panel-scan -->
+
+  <!-- ═══════════════════════════════════════════════════ TAB: STATS -->
+  <div id="panel-stats" class="tab-panel hidden" role="tabpanel">
+    <div class="stats-grid">
+      <div class="stat-card" id="stat-total">
+        <div class="stat-icon blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
+        <div class="stat-body"><span class="stat-value" id="sv-total">0</span><span class="stat-label">Sites Scanned</span></div>
+      </div>
+      <div class="stat-card" id="stat-phishing">
+        <div class="stat-icon red"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div>
+        <div class="stat-body"><span class="stat-value red" id="sv-phishing">0</span><span class="stat-label">Threats Detected</span></div>
+      </div>
+      <div class="stat-card" id="stat-safe">
+        <div class="stat-icon green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 7V12C3 16.55 6.84 20.74 12 22"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="stat-body"><span class="stat-value green" id="sv-safe">0</span><span class="stat-label">Safe Sites</span></div>
+      </div>
+      <div class="stat-card" id="stat-critical">
+        <div class="stat-icon orange"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="stat-body"><span class="stat-value orange" id="sv-critical">0</span><span class="stat-label">Critical / Dangerous</span></div>
+      </div>
+    </div>
+
+    <!-- Threat breakdown bar -->
+    <div class="breakdown-section">
+      <div class="section-label">Threat Breakdown</div>
+      <div class="breakdown-bar" id="breakdown-bar">
+        <div class="bb-safe"       id="bb-safe"       title="Safe"></div>
+        <div class="bb-suspicious" id="bb-suspicious" title="Suspicious"></div>
+        <div class="bb-dangerous"  id="bb-dangerous"  title="Dangerous"></div>
+        <div class="bb-critical"   id="bb-critical"   title="Critical"></div>
+      </div>
+      <div class="breakdown-legend">
+        <span class="leg leg-safe">Safe</span>
+        <span class="leg leg-sus">Suspicious</span>
+        <span class="leg leg-dan">Dangerous</span>
+        <span class="leg leg-crit">Critical</span>
+      </div>
+    </div>
+
+    <!-- Recent scans -->
+    <div class="history-section">
+      <div class="section-label">Recent Scans</div>
+      <ul class="history-list" id="history-list">
+        <li class="history-empty">No scans yet</li>
+      </ul>
+      <button class="btn-text" id="btn-clear-history">Clear history</button>
+    </div>
+  </div><!-- /panel-stats -->
+
+  <!-- ═══════════════════════════════════════════════════ TAB: LISTS -->
+  <div id="panel-lists" class="tab-panel hidden" role="tabpanel">
+
+    <!-- Allow list -->
+    <div class="list-section">
+      <div class="section-label green-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/></svg>
+        Trusted Sites (Allow List)
+      </div>
+      <p class="list-hint">These sites are always marked safe — no scanning.</p>
+      <div class="list-add-row">
+        <input class="list-input" id="allow-input" type="text" placeholder="e.g. example.com" autocomplete="off" spellcheck="false"/>
+        <button class="btn-add green" id="btn-add-allow">Add</button>
+      </div>
+      <ul class="domain-list" id="allow-list-el"></ul>
+    </div>
+
+    <div class="list-divider"></div>
+
+    <!-- Block list -->
+    <div class="list-section">
+      <div class="section-label red-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        Blocked Sites (Block List)
+      </div>
+      <p class="list-hint">These sites are always scored 100 — overlay shown immediately.</p>
+      <div class="list-add-row">
+        <input class="list-input" id="block-input" type="text" placeholder="e.g. phishing-site.xyz" autocomplete="off" spellcheck="false"/>
+        <button class="btn-add red" id="btn-add-block">Add</button>
+      </div>
+      <ul class="domain-list" id="block-list-el"></ul>
+    </div>
+
+  </div><!-- /panel-lists -->
+
+  <!-- ═══════════════════════════════════════════════════ TAB: SETTINGS -->
+  <div id="panel-settings" class="tab-panel hidden" role="tabpanel">
+
+    <div class="settings-list">
+
+      <!-- Master toggle -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Extension Enabled</span>
+          <span class="setting-desc">Turn off to pause all scanning</span>
+        </div>
+        <label class="toggle" aria-label="Extension enabled">
+          <input type="checkbox" id="set-enabled" checked/>
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </label>
+      </div>
+
+      <!-- Notifications -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Desktop Notifications</span>
+          <span class="setting-desc">Alert when suspicious site detected</span>
+        </div>
+        <label class="toggle" aria-label="Notifications enabled">
+          <input type="checkbox" id="set-notifications" checked/>
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </label>
+      </div>
+
+      <!-- Badge -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Badge Score</span>
+          <span class="setting-desc">Show risk score on extension icon</span>
+        </div>
+        <label class="toggle" aria-label="Show badge">
+          <input type="checkbox" id="set-badge" checked/>
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </label>
+      </div>
+
+      <div class="settings-divider"></div>
+
+      <!-- Warning threshold -->
+      <div class="setting-row column">
+        <div class="setting-info">
+          <span class="setting-label">Warning Threshold</span>
+          <span class="setting-desc">Show flags in popup above this score</span>
+        </div>
+        <div class="slider-wrap">
+          <input type="range" class="slider" id="set-warn-threshold" min="10" max="80" value="31"/>
+          <div class="slider-labels"><span>10</span><span class="slider-val" id="warn-val">31</span><span>80</span></div>
+        </div>
+      </div>
+
+      <!-- Block threshold -->
+      <div class="setting-row column">
+        <div class="setting-info">
+          <span class="setting-label">Overlay Threshold</span>
+          <span class="setting-desc">Inject full-page warning above this score</span>
+        </div>
+        <div class="slider-wrap">
+          <input type="range" class="slider" id="set-block-threshold" min="50" max="100" value="86"/>
+          <div class="slider-labels"><span>50</span><span class="slider-val" id="block-val">86</span><span>100</span></div>
+        </div>
+      </div>
+
+      <div class="settings-divider"></div>
+
+      <!-- Scan mode -->
+      <div class="setting-row column">
+        <div class="setting-info">
+          <span class="setting-label">Scan Mode</span>
+          <span class="setting-desc">Which pages to analyze</span>
+        </div>
+        <div class="radio-group">
+          <label class="radio-opt"><input type="radio" name="scan-mode" value="all" id="mode-all" checked/><span>All pages</span></label>
+          <label class="radio-opt"><input type="radio" name="scan-mode" value="http-only" id="mode-http"/><span>HTTP only</span></label>
+          <label class="radio-opt"><input type="radio" name="scan-mode" value="login-only" id="mode-login"/><span>Login pages</span></label>
+        </div>
+      </div>
+
+      <div class="settings-divider"></div>
+
+      <button class="btn btn-full btn-danger-outline" id="btn-reset-settings">
+        Reset All Settings to Default
+      </button>
+
+    </div>
+  </div><!-- /panel-settings -->
+
+  <!-- ═══════════════════════════════════════════════════ FOOTER -->
+  <footer class="footer">
+    <span class="footer-text">100% Private · No data sent to servers</span>
+    <span class="footer-version" id="footer-version">v1.0.0</span>
+  </footer>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

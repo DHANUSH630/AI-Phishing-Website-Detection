@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="AI Phishing Shield — Real-time threat analytics dashboard"/>
+  <title>AI Phishing Shield — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="dashboard.css"/>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════ SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="s-logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L3 7V12C3 16.55 6.84 20.74 12 22C17.16 20.74 21 16.55 21 12V7L12 2Z"/>
+          <path d="M9 12L11 14L15 10"/>
+        </svg>
+      </div>
+      <div>
+        <div class="s-logo-name">AI Phishing Shield</div>
+        <div class="s-logo-tag">Threat Dashboard</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-section="overview">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </a>
+      <a href="#" class="nav-item" data-section="history">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Scan History
+      </a>
+      <a href="#" class="nav-item" data-section="threats">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Threats
+      </a>
+      <a href="#" class="nav-item" data-section="lists">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Allow / Block
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="shield-status" id="shield-status">
+        <span class="status-dot green"></span>
+        <span>Shield Active</span>
+      </div>
+      <div class="sidebar-version" id="sidebar-version">v1.0.0</div>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════════════ MAIN -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title" id="page-title">Overview</h1>
+        <span class="page-subtitle" id="page-subtitle">Real-time threat analytics</span>
+      </div>
+      <div class="topbar-right">
+        <div class="last-scan-info" id="last-scan-info">Loading…</div>
+        <button class="tb-btn" id="btn-refresh">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Refresh
+        </button>
+        <button class="tb-btn danger" id="btn-clear-all">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+          Clear
+        </button>
+      </div>
+    </header>
+
+    <!-- ── SECTION: OVERVIEW ─────────────────────────────────────────────── -->
+    <section id="section-overview" class="section active">
+
+      <!-- Stat cards -->
+      <div class="stats-row">
+        <div class="stat-card" id="sc-total">
+          <div class="sc-icon blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </div>
+          <div class="sc-body">
+            <div class="sc-value" id="sv-total">0</div>
+            <div class="sc-label">Sites Scanned</div>
+          </div>
+          <div class="sc-trend" id="st-total"></div>
+        </div>
+        <div class="stat-card" id="sc-threats">
+          <div class="sc-icon red">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          </div>
+          <div class="sc-body">
+            <div class="sc-value red" id="sv-threats">0</div>
+            <div class="sc-label">Threats Blocked</div>
+          </div>
+          <div class="sc-trend red" id="st-threats"></div>
+        </div>
+        <div class="stat-card" id="sc-safe">
+          <div class="sc-icon green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 7V12C3 16.55 6.84 20.74 12 22"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div class="sc-body">
+            <div class="sc-value green" id="sv-safe">0</div>
+            <div class="sc-label">Safe Sites</div>
+          </div>
+          <div class="sc-trend green" id="st-safe"></div>
+        </div>
+        <div class="stat-card" id="sc-critical">
+          <div class="sc-icon orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div class="sc-body">
+            <div class="sc-value orange" id="sv-critical">0</div>
+            <div class="sc-label">Critical + Dangerous</div>
+          </div>
+          <div class="sc-trend orange" id="st-critical"></div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="charts-row">
+        <!-- Doughnut chart -->
+        <div class="chart-card doughnut-card">
+          <div class="chart-header">
+            <h2 class="chart-title">Threat Breakdown</h2>
+            <span class="chart-sub" id="breakdown-total">0 total</span>
+          </div>
+          <div class="donut-wrap">
+            <canvas id="chart-donut" width="220" height="220"></canvas>
+            <div class="donut-center">
+              <div class="donut-pct" id="donut-pct">0%</div>
+              <div class="donut-lbl">Threat Rate</div>
+            </div>
+          </div>
+          <div class="donut-legend" id="donut-legend"></div>
+        </div>
+
+        <!-- Line / Activity chart -->
+        <div class="chart-card line-card">
+          <div class="chart-header">
+            <h2 class="chart-title">Scan Activity</h2>
+            <div class="chart-filter">
+              <button class="filter-btn active" data-range="7">7d</button>
+              <button class="filter-btn" data-range="14">14d</button>
+              <button class="filter-btn" data-range="30">30d</button>
+            </div>
+          </div>
+          <div class="line-wrap">
+            <canvas id="chart-line" width="100%" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent threats mini-table -->
+      <div class="table-card">
+        <div class="table-header">
+          <h2 class="chart-title">Recent Threats</h2>
+          <a href="#" class="view-all" data-section="history">View all →</a>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="recent-threats-table">
+            <thead>
+              <tr>
+                <th>Domain</th>
+                <th>Risk Score</th>
+                <th>Level</th>
+                <th>Flags</th>
+                <th>Detected</th>
+              </tr>
+            </thead>
+            <tbody id="recent-threats-body">
+              <tr><td colspan="5" class="table-empty">No threats detected yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section><!-- /overview -->
+
+    <!-- ── SECTION: HISTORY ──────────────────────────────────────────────── -->
+    <section id="section-history" class="section">
+
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" id="history-search" type="text" placeholder="Search domains…" autocomplete="off"/>
+        </div>
+        <div class="filter-chips">
+          <button class="chip active" data-filter="all">All</button>
+          <button class="chip" data-filter="safe">Safe</button>
+          <button class="chip" data-filter="suspicious">Suspicious</button>
+          <button class="chip" data-filter="dangerous">Dangerous</button>
+          <button class="chip" data-filter="critical">Critical</button>
+        </div>
+      </div>
+
+      <div class="table-card no-margin">
+        <div class="table-wrap">
+          <table class="data-table" id="history-table">
+            <thead>
+              <tr>
+                <th>Domain</th>
+                <th>Full URL</th>
+                <th>Risk Score</th>
+                <th>Level</th>
+                <th>Method</th>
+                <th>Flags</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="history-body">
+              <tr><td colspan="7" class="table-empty">No scans recorded yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span class="table-count" id="history-count">0 entries</span>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+
+    </section><!-- /history -->
+
+    <!-- ── SECTION: THREATS ──────────────────────────────────────────────── -->
+    <section id="section-threats" class="section">
+
+      <!-- Score heatmap -->
+      <div class="heatmap-card">
+        <div class="chart-header">
+          <h2 class="chart-title">Score Distribution Heatmap</h2>
+          <span class="chart-sub">All-time scan scores bucketed by range</span>
+        </div>
+        <div class="heatmap-grid" id="heatmap-grid"></div>
+        <div class="heatmap-scale">
+          <span>0</span>
+          <div class="heatmap-gradient"></div>
+          <span>100</span>
+        </div>
+      </div>
+
+      <!-- Top flagged domains -->
+      <div class="charts-row two-col">
+        <div class="table-card">
+          <div class="table-header">
+            <h2 class="chart-title">Most Flagged Domains</h2>
+          </div>
+          <ul class="ranked-list" id="top-threats-list">
+            <li class="ranked-empty">No threats recorded</li>
+          </ul>
+        </div>
+
+        <!-- Flag type breakdown -->
+        <div class="table-card">
+          <div class="table-header">
+            <h2 class="chart-title">Detection Methods</h2>
+          </div>
+          <div class="method-bars" id="method-bars"></div>
+        </div>
+      </div>
+
+      <!-- Bypassed warnings -->
+      <div class="table-card">
+        <div class="table-header">
+          <h2 class="chart-title">
+            <span class="warn-dot"></span> Bypassed Warnings
+          </h2>
+          <span class="chart-sub">Sites where user clicked "Proceed Anyway"</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Domain</th><th>Score</th><th>Time</th></tr>
+            </thead>
+            <tbody id="bypassed-body">
+              <tr><td colspan="3" class="table-empty">No bypassed warnings</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section><!-- /threats -->
+
+    <!-- ── SECTION: LISTS ────────────────────────────────────────────────── -->
+    <section id="section-lists" class="section">
+      <div class="lists-grid">
+
+        <!-- Allow list -->
+        <div class="list-card">
+          <div class="list-card-header green-header">
+            <div class="list-header-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/></svg>
+              <h2 class="chart-title">Trusted Sites</h2>
+            </div>
+            <span class="list-count" id="allow-count">0 domains</span>
+          </div>
+          <p class="list-desc">These domains are always marked Safe — no scanning performed.</p>
+          <div class="list-add-row">
+            <input class="list-input" id="d-allow-input" type="text" placeholder="domain.com" autocomplete="off" spellcheck="false"/>
+            <button class="list-add-btn green" id="d-btn-add-allow">+ Add</button>
+          </div>
+          <ul class="list-domains" id="d-allow-list"></ul>
+        </div>
+
+        <!-- Block list -->
+        <div class="list-card">
+          <div class="list-card-header red-header">
+            <div class="list-header-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              <h2 class="chart-title">Blocked Sites</h2>
+            </div>
+            <span class="list-count" id="block-count">0 domains</span>
+          </div>
+          <p class="list-desc">These domains always score 100 — full-page warning shown immediately.</p>
+          <div class="list-add-row">
+            <input class="list-input" id="d-block-input" type="text" placeholder="phishing-site.xyz" autocomplete="off" spellcheck="false"/>
+            <button class="list-add-btn red" id="d-btn-add-block">+ Add</button>
+          </div>
+          <ul class="list-domains" id="d-block-list"></ul>
+        </div>
+
+      </div>
+    </section><!-- /lists -->
+
+  </main><!-- /main -->
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Chart.js -->
+  <script src="chart.umd.min.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,504 @@
+/**
+ * AI Phishing Shield — Warning Overlay Stylesheet
+ * Injected into the page DOM when a high-risk site is detected.
+ * All classes are namespaced with `pshield-` to avoid conflicts.
+ */
+
+/* ── Reset scope ────────────────────────────────────────────────────────────── */
+#pshield-overlay *,
+#pshield-overlay *::before,
+#pshield-overlay *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Root overlay (full-screen backdrop) ────────────────────────────────────── */
+#pshield-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647; /* max z-index */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(12px) saturate(0.4);
+  -webkit-backdrop-filter: blur(12px) saturate(0.4);
+  animation: pshield-fade-in 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes pshield-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Card container ─────────────────────────────────────────────────────────── */
+.pshield-card {
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #0d1117;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow:
+    0 0 0 1px rgba(239, 68, 68, 0.2),
+    0 40px 80px rgba(0, 0, 0, 0.8),
+    0 0 60px rgba(239, 68, 68, 0.08);
+  animation: pshield-slide-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: 0.1s;
+  scrollbar-width: thin;
+  scrollbar-color: #21262d transparent;
+}
+
+.pshield-card::-webkit-scrollbar { width: 5px; }
+.pshield-card::-webkit-scrollbar-track { background: transparent; }
+.pshield-card::-webkit-scrollbar-thumb { background: #21262d; border-radius: 3px; }
+
+/* Critical gets extra glow */
+.pshield-card.pshield-critical {
+  border-color: rgba(239, 68, 68, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(239, 68, 68, 0.35),
+    0 40px 80px rgba(0, 0, 0, 0.8),
+    0 0 80px rgba(239, 68, 68, 0.15);
+}
+
+@keyframes pshield-slide-up {
+  from { opacity: 0; transform: translateY(40px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ── Header banner ──────────────────────────────────────────────────────────── */
+.pshield-header {
+  background: linear-gradient(135deg, #1a0a0a 0%, #0d1117 100%);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 20px 20px 0 0;
+  padding: 28px 28px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background pulse for critical */
+.pshield-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(239, 68, 68, 0.12) 0%, transparent 70%);
+  animation: pshield-pulse 3s ease infinite;
+}
+
+@keyframes pshield-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
+.pshield-header-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.pshield-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #7f1d1d, #dc2626);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+  animation: pshield-icon-shake 0.5s cubic-bezier(.36,.07,.19,.97) 0.5s both;
+}
+
+@keyframes pshield-icon-shake {
+  10%, 90%  { transform: translate3d(-2px, 0, 0); }
+  20%, 80%  { transform: translate3d(3px, 0, 0);  }
+  30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+  40%, 60%  { transform: translate3d(3px, 0, 0);  }
+  100%      { transform: translate3d(0, 0, 0); }
+}
+
+.pshield-icon-wrap svg { color: #fff; }
+
+.pshield-header-text { flex: 1; }
+
+.pshield-warning-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ef4444;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pshield-warning-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: pshield-blink 1.2s ease infinite;
+}
+
+@keyframes pshield-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+.pshield-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #f1f5f9;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.pshield-subtitle {
+  font-size: 13px;
+  color: #8b949e;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.pshield-subtitle strong { color: #cbd5e1; font-weight: 600; }
+
+/* ── Score section ──────────────────────────────────────────────────────────── */
+.pshield-score-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.pshield-gauge {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+}
+
+.pshield-gauge-svg {
+  width: 88px;
+  height: 88px;
+  transform: rotate(-90deg);
+}
+
+.pshield-gauge-bg {
+  fill: none;
+  stroke: #21262d;
+  stroke-width: 7;
+}
+
+.pshield-gauge-fill {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 226;
+  stroke-dashoffset: 226;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.4s,
+              stroke 0.3s ease;
+}
+
+.pshield-gauge-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pshield-score-num {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.pshield-score-lbl {
+  font-size: 8px;
+  font-weight: 600;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.pshield-score-meta { flex: 1; }
+
+.pshield-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: 0.3px;
+}
+
+.pshield-lvl-suspicious { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); }
+.pshield-lvl-dangerous  { background: rgba(249,115,22,0.15); color: #f97316; border: 1px solid rgba(249,115,22,0.25); }
+.pshield-lvl-critical   { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+
+.pshield-level-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pshield-blink 1.2s ease infinite;
+}
+
+.pshield-score-detail {
+  font-size: 12px;
+  color: #8b949e;
+  line-height: 1.6;
+}
+
+.pshield-score-detail span { color: #e6edf3; font-weight: 500; }
+
+/* ── Probability bar ────────────────────────────────────────────────────────── */
+.pshield-prob-bar-wrap {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pshield-prob-bar-track {
+  flex: 1;
+  height: 5px;
+  background: #21262d;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pshield-prob-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  width: 0%;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.5s;
+}
+
+.pshield-prob-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ef4444;
+  white-space: nowrap;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ── Flags section ──────────────────────────────────────────────────────────── */
+.pshield-flags-section {
+  padding: 0 28px 20px;
+}
+
+.pshield-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 18px 0 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pshield-flags-count {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+}
+
+.pshield-flags-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #21262d transparent;
+}
+
+.pshield-flags-list::-webkit-scrollbar { width: 4px; }
+.pshield-flags-list::-webkit-scrollbar-thumb { background: #21262d; border-radius: 2px; }
+
+.pshield-flag-item {
+  display: flex;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.12);
+  animation: pshield-fade-in 0.3s ease both;
+}
+
+.pshield-flag-item:nth-child(1) { animation-delay: 0.15s; }
+.pshield-flag-item:nth-child(2) { animation-delay: 0.22s; }
+.pshield-flag-item:nth-child(3) { animation-delay: 0.29s; }
+.pshield-flag-item:nth-child(4) { animation-delay: 0.36s; }
+.pshield-flag-item:nth-child(5) { animation-delay: 0.43s; }
+
+.pshield-flag-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.pshield-flag-body {}
+.pshield-flag-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e6edf3;
+  line-height: 1.3;
+  margin-bottom: 3px;
+}
+
+.pshield-flag-detail {
+  font-size: 11.5px;
+  color: #8b949e;
+  line-height: 1.55;
+}
+
+/* ── Tip box ────────────────────────────────────────────────────────────────── */
+.pshield-tip {
+  margin: 0 28px 20px;
+  padding: 12px 16px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.pshield-tip-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+.pshield-tip-text {
+  font-size: 12px;
+  color: #8b949e;
+  line-height: 1.6;
+}
+
+.pshield-tip-text strong { color: #93c5fd; font-weight: 600; }
+
+/* ── Action buttons ─────────────────────────────────────────────────────────── */
+.pshield-actions {
+  padding: 0 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pshield-btn {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.1px;
+}
+
+.pshield-btn-back {
+  background: linear-gradient(135deg, #166534, #16a34a);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.35);
+}
+
+.pshield-btn-back:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(22, 163, 74, 0.45);
+}
+
+.pshield-btn-proceed {
+  background: transparent;
+  color: #8b949e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pshield-btn-proceed:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #e6edf3;
+}
+
+.pshield-btn:active { transform: scale(0.98); }
+
+/* ── Countdown timer ────────────────────────────────────────────────────────── */
+.pshield-countdown {
+  text-align: center;
+  font-size: 11.5px;
+  color: #484f58;
+  padding: 0 28px 20px;
+  line-height: 1.6;
+}
+
+.pshield-countdown em {
+  color: #8b949e;
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────────── */
+.pshield-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pshield-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #484f58;
+  font-weight: 500;
+}
+
+.pshield-footer-brand svg { opacity: 0.5; }
+
+.pshield-method-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: #484f58;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 3px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+}
