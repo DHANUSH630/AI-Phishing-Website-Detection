@@ -441,6 +441,11 @@ $('btn-dashboard')?.addEventListener('click', () => {
   chrome.tabs.create({ url: chrome.runtime.getURL('dashboard/index.html') });
 });
 
+$('link-privacy')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  chrome.tabs.create({ url: chrome.runtime.getURL('privacy.html') });
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════════════════════

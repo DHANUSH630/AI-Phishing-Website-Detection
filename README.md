@@ -4,6 +4,18 @@ AI Phishing Shield is an advanced, zero-server, privacy-first browser extension 
 
 ---
 
+## 📸 Visual Preview
+
+| Extension Popup | Warning Block Page |
+| :---: | :---: |
+| ![Popup UI Mockup](assets/popup_mockup.jpg) | ![Warning Overlay](assets/warning_overlay.jpg) |
+
+| Standalone Analytics Dashboard |
+| :---: |
+| ![Dashboard UI Mockup](assets/dashboard_mockup.jpg) |
+
+---
+
 ## 🌟 Key Features
 
 1. **Local ML Inference (TensorFlow.js)**: Runs a 5-layer neural network directly in the browser's service worker context. If loading the neural network fails, it gracefully falls back to a weighted linear model.
@@ -15,12 +27,50 @@ AI Phishing Shield is an advanced, zero-server, privacy-first browser extension 
 
 ---
 
+## ⚙️ Architecture Flow
+
+```mermaid
+flowchart TD
+    A[User visits Website] --> B(DOM Content Script Injected)
+    A --> C(URL Sent to Service Worker)
+    
+    subgraph SW [Background Service Worker]
+        C --> D{Is URL Trusted?}
+        D -- Yes --> E[Cap Score at 10 / Safe]
+        D -- No --> F[Run Local ML Engine]
+        F --> G[Extract 42 URL Features]
+        G --> H[Run TF.js Model Inference]
+        H -- Fail --> I[Run Fallback Weighted Scorer]
+        H -- Success --> J[Combine Score with Rule Engine]
+        I --> J
+    end
+    
+    subgraph CS [Page Content Script]
+        B --> K[Scan DOM: forms, inputs, obfuscation, overlays]
+        K --> L[Calculate DOM Heuristics riskBoost]
+    end
+    
+    J --> M[Send URL Scan Result to Tab]
+    L --> N[Merge DOM Flags in SW]
+    M --> O{Is Combined Score >= 61?}
+    N --> O
+    O -- Yes --> P[Inject Warning Overlay & Block Page]
+    O -- No --> Q[Display Safe Badge on Icon]
+```
+
+---
+
 ## 📂 Project Structure
 
 ```
 AI Phishing Detection/
+├── assets/                          # UI Mockups & Visuals
+│   ├── popup_mockup.jpg
+│   ├── dashboard_mockup.jpg
+│   └── warning_overlay.jpg
 ├── extension/                       # Chrome Extension Source
 │   ├── manifest.json                # MV3 Manifest with permissions & CSP
+│   ├── privacy.html                 # Offline privacy policy for CWS approval
 │   ├── background/
 │   │   └── service-worker.js        # Lazy TF.js load, history, stats, lists API
 │   ├── content/
@@ -113,7 +163,6 @@ This produces the TF.js files in `ml/export/tfjs_model/`.
 Copy the exported model files to the extension folder:
 ```bash
 cp ml/export/tfjs_model/model.json ../extension/ml/
-cp ml/export/tfjs_model/*.bin       ../extension/ml/
 ```
 Go to `chrome://extensions/` and click the **Reload** button on the extension card to apply the new model weights.
 
@@ -123,6 +172,23 @@ Generate performance statistics, ROC curves, confusion matrices, and feature imp
 python evaluate.py --plots
 ```
 Plots are saved to the `ml/plots/` folder for visual inspection.
+
+---
+
+## 🧪 Running Unit Tests
+
+The project includes a lightweight, zero-dependency unit test suite to verify the feature extractor, URL parser, whitelists, and model scoring thresholds:
+
+```bash
+# Run the test suite (requires Node.js)
+node test/run-tests.mjs
+```
+
+The test suite covers:
+* **URL Parsing & Safe Extraction**: Validates that standard schemes (`https://`), IP addresses (`http://1.1.1.1`), and local file paths (`file:///`) are extracted correctly without mangling.
+* **Feature Vector Length & Integrity**: Confirms the feature extractor produces exactly 42 normalized feature points.
+* **Trusted Whitelist Resolution**: Assures academic (`.edu`, `.ac.in`), government (`.gov`), and whitelisted base domains (like `google.com`, `overleaf.com`) bypass phishing rules.
+* **Scorer Thresholds & Calibration**: Verifies that trusted sites score $\le 10$ (Safe) and simulated phishing parameters trigger $\ge 61$ (Dangerous).
 
 ---
 

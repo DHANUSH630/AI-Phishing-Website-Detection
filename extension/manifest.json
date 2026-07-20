@@ -37,12 +37,7 @@
   ],
 
   "permissions": [
-    "activeTab",
-    "tabs",
     "storage",
-    "webNavigation",
-    "scripting",
-    "alarms",
     "notifications"
   ],
 
@@ -59,6 +54,7 @@
         "dashboard/dashboard.css",
         "dashboard/dashboard.js",
         "dashboard/chart.umd.min.js",
+        "privacy.html",
         "ml/model.json",
         "ml/weights.bin",
         "icons/*"

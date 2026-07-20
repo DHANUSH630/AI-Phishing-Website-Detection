@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Privacy Policy - AI Phishing Shield</title>
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: #111827;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #3b82f6;
+      --accent-green: #10b981;
+      --border: #1f2937;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.6;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 680px;
+      width: 100%;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin: 0 0 10px 0;
+      background: linear-gradient(135deg, #60a5fa, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .last-updated {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .section {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      margin-top: 0;
+      color: #60a5fa;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    p {
+      color: var(--text-main);
+      margin: 0 0 15px 0;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    ul {
+      margin: 0 0 15px 0;
+      padding-left: 20px;
+      color: var(--text-muted);
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background-color: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>AI Phishing Shield</h1>
+      <p>Official Privacy Policy</p>
+      <div class="last-updated">Last Updated: July 2026</div>
+    </header>
+
+    <div class="section">
+      <h2><span>🔒</span> Privacy First & Zero-Server Policy</h2>
+      <p>AI Phishing Shield was designed from the ground up as a <strong>privacy-first</strong> utility. We believe that securing your browsing activity should not involve tracking it. <strong>100% of the analysis, scanning, and machine learning evaluations take place locally on your device.</strong></p>
+    </div>
+
+    <div class="section">
+      <h2><span>🌐</span> Does any data leave your browser?</h2>
+      <p><span class="badge">No External Transmissions</span></p>
+      <p>Absolutely no data leaves your browser. Unlike traditional link-checkers that upload the URLs you visit to cloud-based security lists, AI Phishing Shield performs all computations offline:</p>
+      <ul>
+        <li><strong>No URL Uploads:</strong> The URLs you visit are parsed and analyzed entirely within the extension service worker.</li>
+        <li><strong>Local AI Model:</strong> TensorFlow.js neural network inference and fallback scoring are executed client-side inside your browser sandbox.</li>
+        <li><strong>No Cloud Dependencies:</strong> The extension operates fully without calling any third-party APIs.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2><span>📂</span> What data do we access?</h2>
+      <p>To protect you from phishing attempts, the extension temporarily reads the following information when a page loads:</p>
+      <ul>
+        <li><strong>Tab URLs:</strong> To extract heuristic patterns (length, TLD, subdomain depth, typosquatting checking).</li>
+        <li><strong>Page DOM Elements:</strong> The content script scans page input forms to verify if login fields are posting securely, if hidden elements are present, or if copy/right-click actions are hijacked. This data is read in-memory and discarded immediately after the scan.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2><span>💾</span> What data is stored locally?</h2>
+      <p>Any persistent data is saved inside Chrome's secure local sandbox storage and is never shared. This includes:</p>
+      <ul>
+        <li><strong>Scan History Audit:</strong> A list of your previously visited pages, their calculated phishing scores, and threat flags.</li>
+        <li><strong>Statistics:</strong> Aggregated numbers (e.g., total sites scanned, safe vs blocked sites).</li>
+        <li><strong>Allow & Block Lists:</strong> Custom domain rules you manually create to bypass or enforce warnings.</li>
+        <li><strong>Extension Settings:</strong> Your configured preferences (e.g., enable/disable badge, warn thresholds).</li>
+      </ul>
+      <p><em>Note: You can purge all of this data instantly at any time by clicking "Clear History" in the popup settings or web dashboard.</em></p>
+    </div>
+
+    <div class="section">
+      <h2><span>📊</span> Telemetry & Analytics</h2>
+      <p><span class="badge">Zero Tracking</span></p>
+      <p>We do not collect telemetry, crash logs, diagnostic statistics, or usage habits. There are no tracking scripts, analytics modules, or advertisements bundled within the extension package.</p>
+    </div>
+
+    <div class="footer">
+      <p>© 2026 AI Phishing Shield. Distributed under the MIT License.</p>
+    </div>
+  </div>
+
+</body>
+</html>

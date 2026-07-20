@@ -50,6 +50,44 @@
   // UTILITIES
   // ═══════════════════════════════════════════════════════════════════════════
 
+  const TRUSTED_DOMAINS = new Set([
+    'overleaf.com', 'sharelatex.com', 'latex-project.org', 'ctan.org',
+    'google.com', 'gmail.com', 'microsoft.com', 'apple.com', 'github.com',
+    'stackoverflow.com', 'reddit.com', 'wikipedia.org', 'youtube.com',
+    'facebook.com', 'twitter.com', 'x.com', 'instagram.com', 'linkedin.com',
+    'netflix.com', 'yahoo.com', 'bing.com', 'outlook.com', 'live.com',
+    'office.com', 'zoom.us', 'slack.com', 'dropbox.com', 'icloud.com',
+    'nic.in', 'irctc.co.in', 'sbi.co.in', 'onlinesbi.com'
+  ]);
+
+  const TRUSTED_TLDS = new Set([
+    'gov', 'edu', 'mil', 'int',
+    'gov.in', 'gov.uk', 'gov.au', 'gov.ca', 'edu.in', 'ac.in', 'ac.uk',
+  ]);
+
+  function isTrustedHost(hostname) {
+    if (!hostname) return false;
+    const cleanHost = hostname.toLowerCase().replace(/^www\./, '');
+    const parts = cleanHost.split('.');
+    
+    // Check TLDs (.gov, .edu, .mil, etc.)
+    const tld = parts[parts.length - 1];
+    if (TRUSTED_TLDS.has(tld)) return true;
+    if (parts.length >= 2) {
+      const tld2 = parts.slice(-2).join('.');
+      if (TRUSTED_TLDS.has(tld2)) return true;
+    }
+
+    // Check base domain
+    const twoPartTlds = ['co.in','co.uk','co.au','com.au','co.nz','co.za','com.br','co.jp','or.jp','ne.jp','ac.uk','gov.uk','org.uk','gov.in','ac.in','edu.in','res.in'];
+    const last2 = parts.slice(-2).join('.');
+    let baseDomain = last2;
+    if (twoPartTlds.includes(last2) && parts.length >= 3) {
+      baseDomain = parts.slice(-3).join('.');
+    }
+    return TRUSTED_DOMAINS.has(baseDomain);
+  }
+
   function getHostname(url) {
     try { return new URL(url).hostname.toLowerCase(); }
     catch { return ''; }
@@ -245,6 +283,14 @@
 
   function checkBrandMismatch() {
     const hostname    = pageHostname();
+    if (isTrustedHost(hostname)) {
+      return {
+        hasBrandMismatch:    false,
+        detectedBrands:      [],
+        mismatchedBrands:    [],
+        primaryMismatch:     null,
+      };
+    }
     const baseDomain  = pageBaseDomain();
     const detectedBrands = new Set();
 
@@ -742,21 +788,20 @@
   function handleScanResult(result) {
     if (!result) return;
 
-    // Always run DOM scan when we receive a result
+    // If the result already includes merged DOM flags, this is the final broadcast.
+    // Trigger the overlay if the total score is high-risk, and return to avoid infinite loops.
+    if (result.domFlags) {
+      if (result.score >= 61) {
+        triggerOverlay(result);
+      }
+      return;
+    }
+
+    // Otherwise, this is the initial URL-only scan result. Run the DOM scan now
+    // and send the flags back to the service worker to merge.
     runDomScan().then(domFlags => {
-      // Send DOM flags back to service worker to merge into score
       chrome.runtime.sendMessage({ type: 'DOM_FLAGS', payload: domFlags })
         .catch(() => {});
-
-      // Trigger overlay for high-risk pages (score ≥ 61 after DOM boost)
-      const totalScore = Math.min((result.score || 0) + domFlags.riskBoost, 100);
-      if (totalScore >= 61) {
-        triggerOverlay({
-          ...result,
-          score:    totalScore,
-          domFlags,
-        });
-      }
     });
   }
 
@@ -822,7 +867,8 @@
 
       // Independently trigger overlay if DOM alone finds high risk
       // (handles file:// URLs and pages where URL scan is low/absent)
-      if (domFlags.riskBoost >= 40) {
+      // Bypass if this is a trusted host
+      if (domFlags.riskBoost >= 40 && !isTrustedHost(window.location.hostname)) {
         triggerOverlay({
           url:         window.location.href,
           score:       domFlags.riskBoost,

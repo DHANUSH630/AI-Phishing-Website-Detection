@@ -17,7 +17,7 @@
  */
 
 import { extractFeatures }          from '../ml/features.js';
-import { runInference, getTopFeatures } from '../ml/model.js';
+import { runInference, getTopFeatures, isTrustedHost } from '../ml/model.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -44,7 +44,6 @@ const STORAGE_KEYS = {
 };
 
 const MAX_HISTORY  = 500;
-const ALARM_CLEANUP = 'phish_cleanup';
 
 // ─── Default settings ─────────────────────────────────────────────────────────
 const DEFAULT_SETTINGS = {
@@ -159,23 +158,27 @@ function getRiskLevel(score) {
 
 async function updateBadge(tabId, score) {
   if (!settings.showBadge) {
-    chrome.action.setBadgeText({ text: '', tabId });
+    chrome.action.setBadgeText({ text: '', tabId }).catch(() => {});
     return;
   }
 
   const level = getRiskLevel(score);
   const text  = score > 30 ? String(Math.round(score)) : '';
 
-  chrome.action.setBadgeText({ text, tabId });
-  chrome.action.setBadgeBackgroundColor({ color: level.color, tabId });
-  chrome.action.setTitle({
-    title: `AI Phishing Shield${text ? ` — ${level.label} (${score})` : ' — Safe'}`,
-    tabId,
-  });
+  try {
+    await chrome.action.setBadgeText({ text, tabId });
+    await chrome.action.setBadgeBackgroundColor({ color: level.color, tabId });
+    await chrome.action.setTitle({
+      title: `AI Phishing Shield${text ? ` — ${level.label} (${score})` : ' — Safe'}`,
+      tabId,
+    });
+  } catch (err) {
+    // Suppress "No tab with id" errors from closed/invalid tabs
+  }
 }
 
 function clearBadge(tabId) {
-  chrome.action.setBadgeText({ text: '', tabId });
+  chrome.action.setBadgeText({ text: '', tabId }).catch(() => {});
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -357,9 +360,11 @@ function broadcastToTab(tabId, result) {
 async function mergeDomFlags(tabId, domFlags) {
   let result = scanCache.get(tabId);
 
-  // If no URL scan result exists yet, create a baseline entry from DOM scan alone
   if (!result) {
-    const tab = await chrome.tabs.get(tabId).catch(() => null);
+    let tab = null;
+    try {
+      tab = await chrome.tabs.get(tabId);
+    } catch (e) {}
     const url = tab?.url || 'unknown';
     result = {
       url,
@@ -382,12 +387,25 @@ async function mergeDomFlags(tabId, domFlags) {
   // Merge DOM flags
   result.domFlags = domFlags;
 
-  // Add DOM flags to the flags array
-  const domFlagItems = domFlags.flags || [];
-  result.flags = [...(result.flags || []), ...domFlagItems];
+  const hostname = result.meta?.hostname || extractHostname(result.url) || '';
+  const isTrusted = isTrustedHost(hostname);
 
-  // Boost score based on DOM risk
-  const boosted = Math.min(result.score + (domFlags.riskBoost || 0), 100);
+  // Add DOM flags to the flags array if not a trusted host
+  if (!isTrusted) {
+    const domFlagItems = domFlags.flags || [];
+    result.flags = [...(result.flags || []), ...domFlagItems];
+  } else {
+    result.flags = [];
+  }
+
+  // Boost score based on DOM risk (only if not a trusted host)
+  const boost = isTrusted ? 0 : (domFlags.riskBoost || 0);
+  let boosted = Math.min(result.score + boost, 100);
+  
+  if (isTrusted && boosted > 10) {
+    boosted = Math.min(boosted, 10);
+  }
+
   result.score  = boosted;
   result.level  = getRiskLevel(boosted);
 
@@ -396,8 +414,8 @@ async function mergeDomFlags(tabId, domFlags) {
   await chrome.storage.local.set({ [`scan_${tabId}`]: result });
   await updateBadge(tabId, boosted);
 
-  // If score is high enough, record in history and send notification
-  if (boosted > 30) {
+  // If score is high enough (and not a trusted site), record in history and send notification
+  if (boosted > 30 && !isTrusted) {
     await appendHistory(result);
     await updateStats(result);
     sendNotification(result);
@@ -419,6 +437,23 @@ async function getHistory(limit = 50) {
 
 async function clearHistory() {
   await chrome.storage.local.set({ [STORAGE_KEYS.HISTORY]: [] });
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.STATS]: {
+      totalScanned: 0,
+      totalPhishing: 0,
+      totalSafe: 0,
+      totalSuspicious: 0,
+      totalDangerous: 0,
+      totalCritical: 0,
+      lastScan: null
+    }
+  });
+  scanCache.clear();
+  const allData = await chrome.storage.local.get(null);
+  const scanKeys = Object.keys(allData).filter(k => k.startsWith('scan_'));
+  if (scanKeys.length > 0) {
+    await chrome.storage.local.remove(scanKeys);
+  }
 }
 
 async function getStats() {
@@ -573,14 +608,22 @@ async function handleMessage(message, sender) {
 // NAVIGATION EVENT LISTENERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Main frame navigation completed → trigger scan
-chrome.webNavigation.onCompleted.addListener(async ({ url, tabId, frameId }) => {
-  if (frameId !== 0) return; // main frame only
-  if (!settings.enabled) return;
+// Tab updated (Navigation state changes)
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  // Clear old result immediately when navigation starts
+  if (changeInfo.status === 'loading' && changeInfo.url) {
+    scanCache.delete(tabId);
+    clearBadge(tabId);
+  }
 
-  // Small delay to let page settle (configurable)
-  await new Promise(r => setTimeout(r, settings.autoScanDelay));
-  await scanUrl(url, tabId);
+  // Main frame navigation completed → trigger scan
+  if (changeInfo.status === 'complete' && tab.url) {
+    if (!settings.enabled) return;
+
+    // Small delay to let page settle (configurable)
+    await new Promise(r => setTimeout(r, settings.autoScanDelay));
+    await scanUrl(tab.url, tabId);
+  }
 });
 
 // Tab switched → restore badge from cache
@@ -601,54 +644,16 @@ chrome.tabs.onActivated.addListener(async ({ tabId }) => {
   }
 });
 
-// Tab updated (URL change within same tab)
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'loading' && changeInfo.url) {
-    // Clear old result immediately when navigation starts
-    scanCache.delete(tabId);
-    clearBadge(tabId);
-  }
-});
-
 // Tab closed → cleanup
 chrome.tabs.onRemoved.addListener((tabId) => {
   scanCache.delete(tabId);
   chrome.storage.local.remove(`scan_${tabId}`);
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ALARM: PERIODIC HISTORY CLEANUP
-// ═══════════════════════════════════════════════════════════════════════════════
-
-chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === ALARM_CLEANUP) {
-    // Prune old tab scan entries from storage
-    const allKeys = await chrome.storage.local.getKeys?.() || [];
-    const tabKeys = allKeys.filter(k => k.startsWith('scan_'));
-
-    // Remove scan entries for tabs that no longer exist
-    const openTabs = await chrome.tabs.query({});
-    const openTabIds = new Set(openTabs.map(t => `scan_${t.id}`));
-    const staleKeys  = tabKeys.filter(k => !openTabIds.has(k));
-
-    if (staleKeys.length > 0) {
-      await chrome.storage.local.remove(staleKeys);
-      console.log(`[PhishShield] Cleaned up ${staleKeys.length} stale scan entries`);
-    }
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// INSTALL / UPDATE LIFECYCLE
-// ═══════════════════════════════════════════════════════════════════════════════
-
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   // Initialize settings on fresh install
   await loadSettings();
   await loadLists();
-
-  // Set up periodic cleanup alarm (every 30 minutes)
-  chrome.alarms.create(ALARM_CLEANUP, { periodInMinutes: 30 });
 
   if (reason === 'install') {
     console.log('[PhishShield] Extension installed — initializing storage...');
