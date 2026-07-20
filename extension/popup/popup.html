@@ -58,6 +58,18 @@
   <!-- ═══════════════════════════════════════════════════ TAB: SCAN -->
   <div id="panel-scan" class="tab-panel active" role="tabpanel">
 
+    <!-- Fallback Warning Banner -->
+    <div id="tf-fallback-warning" class="tf-warning-banner hidden">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 8px; flex-shrink: 0; margin-top: 1px;">
+        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <div style="display: flex; flex-direction: column;">
+        <span class="warn-title" style="font-weight: 700; font-size: 11px; color: #fbbf24; line-height: 1.2;">Neural model unavailable.</span>
+        <span class="warn-desc" style="font-size: 10px; color: #fbbf24; opacity: 0.85; line-height: 1.2;">Using heuristic detection.</span>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div id="state-loading" class="state-panel">
       <div class="spinner-wrap">
@@ -100,6 +112,7 @@
       </div>
       <div class="status-badge" id="danger-badge"><span class="badge-dot"></span><span id="level-text">Suspicious</span></div>
       <div id="meta-pills-danger" class="meta-pills"></div>
+      <div id="danger-reasons" class="danger-reasons hidden"></div>
       <p class="site-url" id="url-danger"></p>
     </div>
 
@@ -127,6 +140,36 @@
         <span class="dom-score-tag" id="dom-score-tag"></span>
       </div>
       <div class="dom-checks" id="dom-checks"></div>
+    </div>
+
+    <!-- Diagnostics panel -->
+    <div id="diagnostics-panel" class="card-panel hidden">
+      <div class="card-header">
+        <span class="card-title">Model Diagnostics</span>
+      </div>
+      <div class="diag-grid">
+        <div class="diag-item">
+          <span class="diag-lbl">Confidence</span>
+          <span class="diag-val" id="diag-confidence">-</span>
+        </div>
+        <div class="diag-item">
+          <span class="diag-lbl">Scan Duration</span>
+          <span class="diag-val" id="diag-duration">-</span>
+        </div>
+        <div class="diag-item">
+          <span class="diag-lbl">Model Version</span>
+          <span class="diag-val" id="diag-model-ver">-</span>
+        </div>
+        <div class="diag-item">
+          <span class="diag-lbl">Features Scanned</span>
+          <span class="diag-val" id="diag-features">-</span>
+        </div>
+      </div>
+      <div class="confidence-bar-wrap">
+        <div class="confidence-bar-track">
+          <div class="confidence-bar-fill" id="confidence-bar-fill" style="width: 0%"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Scan actions -->

@@ -266,13 +266,16 @@ async function scanUrl(url, tabId) {
     }
 
     // ── ML Inference ────────────────────────────────────────────────────────
+    const startT = performance.now();
     const inference = await runInference(url);
+    const duration = parseFloat((performance.now() - startT).toFixed(1));
 
     const result = {
       url,
       tabId,
       score:       inference.score,
       probability: parseFloat(inference.probability.toFixed(4)),
+      duration,
       level:       getRiskLevel(inference.score),
       flags:       inference.flags || [],
       topFeatures: getTopFeatures(inference.features.vector, 5),
@@ -322,6 +325,7 @@ function makeSafeResult(url, tabId, reason = 'safe') {
     level: RISK_LEVELS.SAFE,
     flags: [], topFeatures: [], method: reason,
     domFlags: null, timestamp: Date.now(),
+    duration: 0.1,
     meta: { hostname: extractHostname(url), hasHttps: url.startsWith('https') },
   };
 }
@@ -334,6 +338,7 @@ function makeBlockedResult(url, tabId) {
     flags: [{ id: 'blocklist', label: 'Manually Blocked', detail: 'This domain is on your personal block list.' }],
     topFeatures: [], method: 'block-listed',
     domFlags: null, timestamp: Date.now(),
+    duration: 0.1,
     meta: { hostname: extractHostname(url), hasHttps: false },
   };
 }

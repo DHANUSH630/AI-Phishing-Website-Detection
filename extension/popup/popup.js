@@ -119,8 +119,14 @@ function renderMetaPills(containerId, meta, method) {
     pills.push({ label: `.${meta.tld}`, cls: 'pill-info' });
   if (meta?.subdomainDepth > 0)
     pills.push({ label: `${meta.subdomainDepth} subdomain${meta.subdomainDepth > 1 ? 's' : ''}`, cls: meta.subdomainDepth > 2 ? 'pill-warn' : 'pill-info' });
-  if (method)
-    pills.push({ label: method === 'neural' ? '🧠 Neural' : method === 'weighted' ? '⚖ Weighted' : '📋 Rules', cls: 'pill-info' });
+  if (method) {
+    let label = '📋 Rules';
+    let cls = 'pill-info';
+    if (method === 'neural') label = '🧠 Neural';
+    else if (method === 'weighted') label = '⚖ Weighted';
+    else if (method === 'trusted') { label = '🛡 Trusted'; cls = 'pill-ok'; }
+    pills.push({ label, cls });
+  }
 
   el.innerHTML = pills.map(p => `<span class="meta-pill ${p.cls}">${esc(p.label)}</span>`).join('');
 }
@@ -184,10 +190,12 @@ function renderDomPanel(domFlags) {
 function renderScanResult(result) {
   $('flags-panel')?.classList.add('hidden');
   $('dom-panel')?.classList.add('hidden');
+  $('diagnostics-panel')?.classList.add('hidden');
+  $('tf-fallback-warning')?.classList.add('hidden');
 
   if (!result) { showState('nodata'); $('logo-status').textContent = 'No data'; return; }
 
-  const { score, url, flags = [], domFlags, meta = {}, method } = result;
+  const { score, url, flags = [], domFlags, meta = {}, method, probability, duration } = result;
   const cls = scoreClass(score);
 
   // Update logo
@@ -211,13 +219,56 @@ function renderScanResult(result) {
 
     const badge = $('danger-badge');
     if (badge) badge.className = `status-badge ${scoreBadgeClass(score)}`;
-    $('level-text').textContent = scoreLevelText(score);
+    const confidenceVal = ((probability ?? (score / 100)) * 100).toFixed(1);
+    $('level-text').textContent = `${scoreLevelText(score)} (Confidence: ${confidenceVal}%)`;
+
+    const reasonsEl = $('danger-reasons');
+    if (reasonsEl) {
+      if (flags.length > 0) {
+        reasonsEl.innerHTML = `<strong>Reasons:</strong> ${flags.slice(0, 4).map(f => esc(f.label)).join(' • ')}`;
+        reasonsEl.classList.remove('hidden');
+      } else {
+        reasonsEl.classList.add('hidden');
+      }
+    }
 
     renderMetaPills('meta-pills-danger', meta, method);
     renderFlags(flags);
   }
 
   if (domFlags) renderDomPanel(domFlags);
+
+  // Render Diagnostics
+  const confidence = ((probability ?? (score / 100)) * 100).toFixed(1);
+  const scanTime = duration !== undefined ? `${duration} ms` : '0.1 ms';
+  const modelVer = 'v1.1-ensemble';
+  const domChecksCount = domFlags ? 15 : 0;
+  const featuresCount = `42 URL + ${domChecksCount} DOM`;
+
+  if ($('diag-confidence')) $('diag-confidence').textContent = `${confidence}%`;
+  if ($('diag-duration'))   $('diag-duration').textContent   = scanTime;
+  if ($('diag-model-ver'))  $('diag-model-ver').textContent  = modelVer;
+  if ($('diag-features'))   $('diag-features').textContent   = featuresCount;
+
+  const barFill = $('confidence-bar-fill');
+  if (barFill) {
+    barFill.style.width = `${confidence}%`;
+    if (score <= 30) {
+      barFill.style.background = 'var(--green)';
+    } else if (score <= 60) {
+      barFill.style.background = 'var(--yellow)';
+    } else if (score <= 85) {
+      barFill.style.background = 'var(--orange)';
+    } else {
+      barFill.style.background = 'var(--red)';
+    }
+  }
+  $('diagnostics-panel')?.classList.remove('hidden');
+
+  // If TensorFlow model failed to load, warn the user transparently
+  if (method && method !== 'neural' && method !== 'dom-only') {
+    $('tf-fallback-warning')?.classList.remove('hidden');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

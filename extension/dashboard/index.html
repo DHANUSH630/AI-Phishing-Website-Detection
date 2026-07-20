@@ -124,6 +124,22 @@
         </div>
       </div>
 
+      <!-- Scans Interval Row -->
+      <div class="stats-sub-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0 16px 0;">
+        <div class="sub-stat-card" style="background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 10px 14px; display: flex; flex-direction: column; gap: 3px;">
+          <span style="font-size: 9.5px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Daily Scans (24h)</span>
+          <span style="font-size: 20px; font-weight: 800; color: var(--blue);" id="sv-daily">0</span>
+        </div>
+        <div class="sub-stat-card" style="background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 10px 14px; display: flex; flex-direction: column; gap: 3px;">
+          <span style="font-size: 9.5px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Weekly Scans (7d)</span>
+          <span style="font-size: 20px; font-weight: 800; color: var(--green);" id="sv-weekly">0</span>
+        </div>
+        <div class="sub-stat-card" style="background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 10px 14px; display: flex; flex-direction: column; gap: 3px;">
+          <span style="font-size: 9.5px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Scans (30d)</span>
+          <span style="font-size: 20px; font-weight: 800; color: var(--orange);" id="sv-monthly">0</span>
+        </div>
+      </div>
+
       <!-- Charts row -->
       <div class="charts-row">
         <!-- Doughnut chart -->
@@ -231,37 +247,75 @@
     <!-- ── SECTION: THREATS ──────────────────────────────────────────────── -->
     <section id="section-threats" class="section">
 
-      <!-- Score heatmap -->
-      <div class="heatmap-card">
-        <div class="chart-header">
-          <h2 class="chart-title">Score Distribution Heatmap</h2>
-          <span class="chart-sub">All-time scan scores bucketed by range</span>
+      <!-- Row 1: Pie Chart & Confidence Histogram -->
+      <div class="charts-row two-col" style="margin-bottom: 16px;">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h2 class="chart-title">Safe vs Phishing</h2>
+            <span class="chart-sub">Classification ratio of scanned sites</span>
+          </div>
+          <div style="height: 180px; display: flex; justify-content: center; align-items: center; padding: 10px 0;">
+            <canvas id="chart-safe-phish" width="160" height="160"></canvas>
+          </div>
         </div>
-        <div class="heatmap-grid" id="heatmap-grid"></div>
-        <div class="heatmap-scale">
-          <span>0</span>
-          <div class="heatmap-gradient"></div>
-          <span>100</span>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h2 class="chart-title">Confidence Histogram</h2>
+            <span class="chart-sub">Distribution of model confidence percentages</span>
+          </div>
+          <div style="height: 180px; padding: 10px 0;">
+            <canvas id="chart-confidence-hist" width="100%" height="100%"></canvas>
+          </div>
         </div>
       </div>
 
-      <!-- Top flagged domains -->
-      <div class="charts-row two-col">
+      <!-- Row 2: Most Flagged Domains & Top Triggered Features -->
+      <div class="charts-row two-col" style="margin-bottom: 16px;">
         <div class="table-card">
           <div class="table-header">
             <h2 class="chart-title">Most Flagged Domains</h2>
+            <span class="chart-sub">Top targets with recurring flags</span>
           </div>
-          <ul class="ranked-list" id="top-threats-list">
+          <ul class="ranked-list" id="top-threats-list" style="margin-top: 10px; max-height: 220px; overflow-y: auto;">
             <li class="ranked-empty">No threats recorded</li>
           </ul>
         </div>
 
-        <!-- Flag type breakdown -->
         <div class="table-card">
           <div class="table-header">
-            <h2 class="chart-title">Detection Methods</h2>
+            <h2 class="chart-title">Top Triggered Features</h2>
+            <span class="chart-sub">Heuristics triggered most frequently</span>
           </div>
-          <div class="method-bars" id="method-bars"></div>
+          <ul class="ranked-list" id="top-features-list" style="margin-top: 10px; max-height: 220px; overflow-y: auto;">
+            <li class="ranked-empty">No features recorded</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Row 3: Heatmap & Detection Methods -->
+      <div class="charts-row two-col" style="margin-bottom: 16px;">
+        <!-- Score heatmap -->
+        <div class="heatmap-card" style="margin-bottom: 0;">
+          <div class="chart-header">
+            <h2 class="chart-title">Score Distribution Heatmap</h2>
+            <span class="chart-sub">All-time scan scores bucketed by range</span>
+          </div>
+          <div class="heatmap-grid" id="heatmap-grid" style="margin-top: 15px;"></div>
+          <div class="heatmap-scale" style="margin-top: 15px;">
+            <span>0</span>
+            <div class="heatmap-gradient"></div>
+            <span>100</span>
+          </div>
+        </div>
+
+        <!-- Flag type breakdown -->
+        <div class="table-card" style="margin-bottom: 0;">
+          <div class="table-header">
+            <h2 class="chart-title">Detection Engines</h2>
+            <span class="chart-sub">Distribution of scanner types</span>
+          </div>
+          <div class="method-bars" id="method-bars" style="margin-top: 12px;"></div>
         </div>
       </div>
 

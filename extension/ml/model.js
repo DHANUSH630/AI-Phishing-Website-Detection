@@ -215,6 +215,68 @@ function weightedLinearScore(vector, hostname = '') {
   return sigmoid(dot);
 }
 
+/**
+ * Compact client-side Random Forest classifier (5 Decision Trees).
+ * Evaluates key structural, keyword, and typosquat features from the 42-feature vector.
+ * Returns a probability in the range [0, 1].
+ *
+ * @param {Float32Array} v - The 42-feature vector
+ * @returns {number} - Phishing probability
+ */
+function randomForestScore(v) {
+  // Tree 1: Brand Spoofing & Typosquatting (v[13]=brandSubdomain, v[14]=brandUrl, v[15]=typoScore)
+  const t1 = () => {
+    if (v[15] > 0.4) { // Typosquatting detected
+      return v[13] > 0.5 ? 0.95 : 0.85;
+    }
+    if (v[14] > 0.5) { // Brand keyword in URL but host doesn't match
+      return 0.90;
+    }
+    return 0.05;
+  };
+
+  // Tree 2: Identity & TLD Trust (v[3]=hasIp, v[9]=dotCount, v[10]=rareTld)
+  const t2 = () => {
+    if (v[3] > 0.5) return 0.98; // Raw IP Address
+    if (v[10] > 0.5) { // Rare/Dangerous TLD
+      return v[9] > 0.3 ? 0.80 : 0.45;
+    }
+    return v[9] > 0.5 ? 0.35 : 0.02;
+  };
+
+  // Tree 3: Obfuscation & Redirection (v[18]=hasHex, v[24]=redirectParam, v[30]=base64)
+  const t3 = () => {
+    if (v[18] > 0.5) { // Hex character encoding
+      return v[30] > 0.5 ? 0.85 : 0.60;
+    }
+    if (v[24] > 0.5) return 0.70; // Redirect query parameter
+    return v[30] > 0.5 ? 0.50 : 0.03;
+  };
+
+  // Tree 4: Structure & Protocols (v[0]=urlLength, v[34]=urlEntropy, v[4]=missingHttps)
+  const t4 = () => {
+    if (v[34] > 0.8) { // High URL character entropy
+      return v[0] > 0.5 ? 0.75 : 0.50;
+    }
+    if (v[4] > 0.5) { // HTTP connection (no SSL)
+      return v[0] > 0.6 ? 0.65 : 0.15;
+    }
+    return v[0] > 0.5 ? 0.30 : 0.04;
+  };
+
+  // Tree 5: Domain Digits & TLD Length (v[22]=hostDigits, v[35]=digitRatio, v[12]=tldLength)
+  const t5 = () => {
+    if (v[22] > 0.4) { // High quantity of digits in domain
+      return v[35] > 0.2 ? 0.82 : 0.40;
+    }
+    if (v[12] > 0.3) return 0.35; // Long TLD name
+    return 0.05;
+  };
+
+  // Return average prediction across the 5 trees
+  return (t1() + t2() + t3() + t4() + t5()) / 5;
+}
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN INFERENCE PIPELINE
@@ -269,36 +331,43 @@ export async function runInference(url) {
   // 4. Rule-based score (always computed — used for XAI flags)
   const ruleResult = ruleBasedScore(features);
 
-  // 5. Trusted domain override — cap score at 10 for known-good domains
+  // 5. Random Forest score (always computed — decision tree ensemble)
+  const rfProb = randomForestScore(features.vector);
+
+  // 6. Trusted domain override — cap score at 10 for known-good domains
   const hostname = features.hostname || '';
   const isTrusted = isTrustedHost(hostname);
 
-  // 6. Blend ML probability with rule-based score
+  // 7. Ensemble Blend: 45% Neural/Weighted ML, 35% Random Forest, 20% Expert Rules
   let finalScore;
+  let ensembleProb;
+
   if (probability !== null) {
-    const mlScore   = Math.round(probability * 100);
-    const ruleScore = ruleResult.score;
-    // Weighted blend: 70% ML, 30% rules
-    finalScore = Math.round(mlScore * 0.7 + ruleScore * 0.3);
+    const ruleProb = ruleResult.score / 100;
+    ensembleProb = (probability * 0.45) + (rfProb * 0.35) + (ruleProb * 0.20);
+    finalScore   = Math.round(ensembleProb * 100);
   } else {
-    finalScore = ruleResult.score;
-    method = 'rule-based';
+    // If both ML components fail, rely fully on heuristic rule score
+    ensembleProb = ruleResult.score / 100;
+    finalScore   = ruleResult.score;
+    method       = 'rule-based';
   }
 
   // Cap trusted domain scores — they should never trigger warnings
   if (isTrusted && finalScore > 10) {
     finalScore = Math.min(finalScore, 10);
+    ensembleProb = Math.min(ensembleProb, 0.10);
   }
 
   finalScore = Math.min(finalScore, 100);
 
   return {
     score:       finalScore,
-    probability: probability ?? (ruleResult.score / 100),
+    probability: ensembleProb,
     level:       getLevel(finalScore),
     flags:       isTrusted ? [] : ruleResult.flags,
     features,
-    method,
+    method:      isTrusted ? 'trusted' : method,
   };
 }
 

@@ -198,6 +198,23 @@ ul     { list-style: none; }
 
 /* Meta pills */
 .meta-pills { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; min-height: 12px; }
+
+.danger-reasons {
+  margin: 10px 16px 2px 16px;
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.5;
+  text-align: center;
+  font-weight: 500;
+}
+.danger-reasons strong {
+  color: var(--red);
+  font-weight: 700;
+  margin-right: 4px;
+}
+.danger-reasons.hidden {
+  display: none !important;
+}
 .meta-pill {
   font-size: 9.5px; font-weight: 600; padding: 3px 8px; border-radius: 999px; letter-spacing: .15px;
 }
@@ -514,3 +531,62 @@ ul     { list-style: none; }
 }
 .toast.hidden { display: none; }
 @keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(8px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+
+/* ── Fallback Warning Banner ────────────────────────────────────────────────── */
+.tf-warning-banner {
+  display: flex;
+  align-items: center;
+  background-color: rgba(245, 158, 11, 0.08); /* warning amber */
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: var(--radius-lg);
+  padding: 8px 12px;
+  margin: 10px 10px 4px 10px;
+  color: #fbbf24; /* bright amber */
+  text-align: left;
+}
+.tf-warning-banner.hidden {
+  display: none !important;
+}
+
+/* ── Diagnostics Panel ──────────────────────────────────────────────────────── */
+.diag-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
+}
+.diag-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-3);
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  font-size: 10.5px;
+}
+.diag-lbl {
+  color: var(--text-3);
+  font-weight: 500;
+}
+.diag-val {
+  color: var(--text-1);
+  font-weight: 700;
+}
+.confidence-bar-wrap {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+}
+.confidence-bar-track {
+  height: 4px;
+  background: var(--bg-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.confidence-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--green) 0%, var(--orange) 70%, var(--red) 100%);
+  width: 0%;
+  transition: width 0.8s var(--ease);
+}

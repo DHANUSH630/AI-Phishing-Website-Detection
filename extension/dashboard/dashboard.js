@@ -145,6 +145,8 @@ async function loadAll() {
 
 let _donutChart = null;
 let _lineChart  = null;
+let _safePhishChart = null;
+let _confidenceHistChart = null;
 let _lineRange  = 7;
 
 async function renderOverview() {
@@ -153,6 +155,16 @@ async function renderOverview() {
   animateCount($('sv-threats'),  _stats.totalPhishing  || 0);
   animateCount($('sv-safe'),     _stats.totalSafe      || 0);
   animateCount($('sv-critical'), (_stats.totalDangerous||0) + (_stats.totalCritical||0));
+
+  // Daily, weekly, monthly scans count
+  const now = Date.now();
+  const dailyCount   = _history.filter(h => h.timestamp >= now - 86400000).length;
+  const weeklyCount  = _history.filter(h => h.timestamp >= now - 7 * 86400000).length;
+  const monthlyCount = _history.filter(h => h.timestamp >= now - 30 * 86400000).length;
+
+  animateCount($('sv-daily'),   dailyCount);
+  animateCount($('sv-weekly'),  weeklyCount);
+  animateCount($('sv-monthly'), monthlyCount);
 
   // Threat rate on stat cards
   const total = _stats.totalScanned || 1;
@@ -423,10 +435,144 @@ document.querySelectorAll('.chip[data-filter]').forEach(chip => {
 // ══════════════════════════════════════════════════════════
 
 function renderThreats() {
+  renderSafePhishPie();
+  renderConfidenceHist();
   renderHeatmap();
   renderRankedThreats();
+  renderTopFeatures();
   renderMethodBars();
   renderBypassed();
+}
+
+function renderSafePhishPie() {
+  let safeCount = 0;
+  let phishCount = 0;
+
+  _history.forEach(h => {
+    if (h.score > 60) phishCount++;
+    else              safeCount++;
+  });
+
+  const total = safeCount + phishCount || 1;
+
+  if (_safePhishChart) _safePhishChart.destroy();
+
+  const ctx = $('chart-safe-phish').getContext('2d');
+  _safePhishChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: ['Safe Sites', 'Phishing Threats'],
+      datasets: [{
+        data: [safeCount, phishCount],
+        backgroundColor: ['rgba(34,197,94,.15)', 'rgba(239,68,68,.15)'],
+        borderColor: ['#22c55e', '#ef4444'],
+        borderWidth: 2,
+        hoverBackgroundColor: ['rgba(34,197,94,.3)', 'rgba(239,68,68,.3)'],
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#8b949e', font: { size: 10 }, boxWidth: 10, padding: 8 }
+        },
+        tooltip: {
+          backgroundColor: '#161b22',
+          borderColor: 'rgba(255,255,255,.1)',
+          borderWidth: 1,
+          titleColor: '#e6edf3',
+          bodyColor: '#8b949e',
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${ctx.parsed} (${Math.round(ctx.parsed/total*100)}%)`
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderConfidenceHist() {
+  // 10 buckets of 10% each (0-10%, 10-20%... 90-100%)
+  const BUCKETS = 10;
+  const counts = Array(BUCKETS).fill(0);
+
+  _history.forEach(h => {
+    // probability is 0-1. Fallback to score/100.
+    const prob = h.probability ?? (h.score / 100);
+    const b = Math.min(Math.floor(prob * 10), BUCKETS - 1);
+    counts[b]++;
+  });
+
+  const labels = ['0-10%', '10-20%', '20-30%', '30-40%', '40-50%', '50-60%', '60-70%', '70-80%', '80-90%', '90-100%'];
+
+  if (_confidenceHistChart) _confidenceHistChart.destroy();
+
+  const ctx = $('chart-confidence-hist').getContext('2d');
+  _confidenceHistChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Scans count',
+        data: counts,
+        backgroundColor: 'rgba(59,130,246,.15)',
+        borderColor: '#3b82f6',
+        borderWidth: 1.5,
+        hoverBackgroundColor: 'rgba(59,130,246,.35)',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#161b22',
+          borderColor: 'rgba(255,255,255,.1)',
+          borderWidth: 1,
+          titleColor: '#e6edf3',
+          bodyColor: '#8b949e',
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#484f58', font: { size: 9 } } },
+        y: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#484f58', font: { size: 9 } }, beginAtZero: true, precision: 0 }
+      }
+    }
+  });
+}
+
+function renderTopFeatures() {
+  const counts = {};
+
+  _history.forEach(h => {
+    if (h.flags && Array.isArray(h.flags)) {
+      h.flags.forEach(f => {
+        const label = f.label || 'Unknown heuristic';
+        counts[label] = (counts[label] || 0) + 1;
+      });
+    }
+  });
+
+  const sorted = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8);
+
+  const el = $('top-features-list');
+  if (!sorted.length) {
+    el.innerHTML = '<li class="ranked-empty">No heuristics triggered yet 🎉</li>';
+    return;
+  }
+
+  el.innerHTML = sorted.map(([label, count], i) => `
+    <li class="ranked-item">
+      <span class="ranked-num">${i + 1}</span>
+      <span class="ranked-host" title="${esc(label)}">${esc(label)}</span>
+      <span class="ranked-count" style="background: rgba(249,115,22,.12); color: #f97316; font-size: 9.5px; padding: 2px 8px; border-radius: 999px; font-weight: 700;">${count}×</span>
+    </li>
+  `).join('');
 }
 
 function renderHeatmap() {

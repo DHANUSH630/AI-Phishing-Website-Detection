@@ -70,8 +70,8 @@
     const level    = getLevelInfo(score);
     const host     = truncateHost(url);
     const isCrit   = level.key === 'critical';
-    const pct      = Math.round((probability || score / 100) * 100);
-    const allFlags = buildAllFlags(flags, domFlags);
+    const confidence = ((probability ?? (score / 100)) * 100).toFixed(1);
+    const allFlags   = buildAllFlags(flags, domFlags);
 
     return `
       <div class="pshield-card ${isCrit ? 'pshield-critical' : ''}" role="dialog" aria-modal="true"
@@ -121,18 +121,27 @@
           </div>
 
           <div class="pshield-score-meta">
-            <div class="pshield-level-badge pshield-lvl-${level.key}">
-              <span class="pshield-level-dot"></span>
-              ${esc(level.label)} Risk
+            <div class="pshield-level-badge pshield-lvl-${level.key}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px; border-radius: 8px; padding: 6px 12px; height: auto;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="pshield-level-dot"></span>
+                <strong>${esc(level.label)} Risk</strong>
+              </div>
+              <div style="font-size: 10px; opacity: 0.9; margin-left: 13px;">Confidence: ${confidence}%</div>
             </div>
             <div class="pshield-score-detail">
               <span>${allFlags.length}</span> suspicious signal${allFlags.length !== 1 ? 's' : ''} detected
-              · AI confidence: <span>${pct}%</span>
+              · AI confidence: <span>${confidence}%</span>
+              ${allFlags.length > 0 ? `
+              <div class="pshield-top-reasons">
+                <strong>Reasons:</strong>
+                ${allFlags.slice(0, 4).map(f => `• ${esc(f.label)}`).join(' ')}
+              </div>
+              ` : ''}
               <div class="pshield-prob-bar-wrap">
                 <div class="pshield-prob-bar-track">
                   <div class="pshield-prob-bar-fill" id="pshield-prob-bar" style="width:0%"></div>
                 </div>
-                <span class="pshield-prob-label">${pct}%</span>
+                <span class="pshield-prob-label">${confidence}%</span>
               </div>
             </div>
           </div>

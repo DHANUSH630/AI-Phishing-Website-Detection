@@ -1,5 +1,12 @@
 # AI Phishing Website Detection (AI Phishing Shield)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue.svg?logo=googlechrome&logoColor=white)](extension/manifest.json)
+[![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-FF6F00?logo=tensorflow&logoColor=white)](https://js.tensorflow.org)
+[![Chrome Extension](https://img.shields.io/badge/Chrome_Extension-4285F4?logo=google-chrome&logoColor=white)](https://chrome.google.com/webstore)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](#)
+[![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)](#)
+
 AI Phishing Shield is an advanced, zero-server, privacy-first browser extension that detects phishing sites, predicts zero-day attacks, explains threats transparently, and detects fake login forms using client-side Machine Learning (TensorFlow.js) and 15 robust DOM heuristic checks.
 
 ---
@@ -196,3 +203,25 @@ The test suite covers:
 * **100% Client-Side**: No URLs, credentials, or private information are ever sent to remote servers. All evaluations run in your local browser sandbox.
 * **Lazy Script Loading**: Heavier scripts (like `overlay.js` and `tfjs`) are only initialized when necessary, ensuring minimal memory footprint on safe websites.
 * **Indexed DB Caching**: Visited domains are quickly checked against an in-memory cache to save CPU cycles.
+
+---
+
+## 🛠️ GitHub Repository Features Setup
+
+To fully align your GitHub repository structure and prepare it for collaboration:
+
+### 1. Enable Issues, Discussions, and Wikis
+1. Navigate to your repository page on GitHub: [DHANUSH630/AI-Phishing-Website-Detection](https://github.com/DHANUSH630/AI-Phishing-Website-Detection).
+2. Click on the **Settings** tab (gear icon in the top navigation bar).
+3. Under the **General** section (left sidebar), scroll down to the **Features** panel:
+   * ☑ **Wikis**: Check this box to enable project documentation wikis.
+   * ☑ **Issues**: Check this box to enable bug reports, tracking, and task checklists.
+   * ☑ **Discussions**: Check this box to enable community questions, chat, and features debates.
+4. Changes are saved automatically.
+
+### 2. Enable Releases
+Releases are automatically available once tags are pushed to the repository. 
+To publish your first release:
+1. Push the tag: `git push origin v1.1.0`.
+2. On your repository homepage, look at the right sidebar, click **Releases** $\rightarrow$ **Draft a new release**.
+3. Select your tag `v1.1.0`, fill in the title and description (refer to `CHANGELOG.md`), and click **Publish release**.
