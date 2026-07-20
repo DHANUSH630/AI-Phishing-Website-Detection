@@ -30,18 +30,18 @@ const MODEL_CONFIG = {
   threshold:  0.50,   // probability above this = phishing
 };
 
-// ─── Feature weights (empirically tuned — high-impact phishing indicators) ────
-// These form the basis of the lightweight model when TF.js is unavailable
+// ─── Feature weights (recalibrated — only strong phishing indicators score high) ─
+// Low weights on benign features, high weights on actual phishing signals
 const FEATURE_WEIGHTS = new Float32Array([
-  // F01-F10: URL structure
-  0.35,  0.20,  0.55,  0.95,  0.80,  0.45,  0.90,  0.40,  0.30,  0.25,
+  // F01-F10: URL structure (mostly benign — low weights)
+  0.05,  0.03,  0.15,  0.90,  0.10,  0.35,  0.85,  0.20,  0.08,  0.06,
   // F11-F20: Domain / TLD
-  0.50,  0.40,  0.20,  0.85,  0.80,  0.90,  0.45,  0.25,  0.40,  0.35,
+  0.70,  0.60,  0.05,  0.80,  0.75,  0.85,  0.15,  0.10,  0.30,  0.20,
   // F21-F30: Character-level
-  0.70,  0.35,  0.30,  0.20,  0.60,  0.25,  0.20,  0.30,  0.25,  0.20,
+  0.50,  0.05,  0.10,  0.05,  0.55,  0.15,  0.06,  0.05,  0.05,  0.04,
   // F31-F42: Statistical / entropy
-  0.45,  0.30,  0.55,  0.45,  0.60,  0.30,  0.35,  0.35,  0.40,  0.75,
-  0.80,  0.30,
+  0.20,  0.15,  0.04,  0.04,  0.04,  0.03,  0.03,  0.25,  0.30,  0.80,
+  0.70,  0.05,
 ]);
 
 
@@ -138,19 +138,80 @@ function sigmoid(x) {
   return 1 / (1 + Math.exp(-x));
 }
 
+// ─── Trusted TLDs — domains with these TLDs get a score reduction ─────────────
+const TRUSTED_TLDS = new Set([
+  'gov', 'edu', 'mil', 'int',
+  'gov.in', 'gov.uk', 'gov.au', 'gov.ca', 'edu.in', 'ac.in', 'ac.uk',
+]);
+
+// ─── Trusted base domains — well-known legitimate sites ───────────────────────
+const TRUSTED_DOMAINS = new Set([
+  'google.com', 'youtube.com', 'facebook.com', 'amazon.com', 'microsoft.com',
+  'apple.com', 'twitter.com', 'x.com', 'instagram.com', 'linkedin.com',
+  'netflix.com', 'github.com', 'stackoverflow.com', 'reddit.com',
+  'wikipedia.org', 'yahoo.com', 'bing.com', 'live.com', 'outlook.com',
+  'office.com', 'office365.com', 'microsoftonline.com',
+  'paypal.com', 'ebay.com', 'dropbox.com', 'icloud.com',
+  'chase.com', 'bankofamerica.com', 'wellsfargo.com', 'citibank.com',
+  'discord.com', 'steam.com', 'steampowered.com', 'twitch.tv',
+  'whatsapp.com', 'telegram.org', 'zoom.us', 'slack.com',
+  'cloudflare.com', 'amazonaws.com', 'azure.com', 'heroku.com',
+  'npmjs.com', 'docker.com', 'gitlab.com', 'bitbucket.org',
+  'medium.com', 'notion.so', 'figma.com', 'canva.com',
+  'overleaf.com', 'latex-project.org', 'ctan.org', 'sharelatex.com',
+  'w3.org', 'mozilla.org', 'apache.org', 'python.org',
+  'oracle.com', 'ibm.com', 'salesforce.com', 'adobe.com',
+  'spotify.com', 'samsung.com', 'intel.com', 'nvidia.com',
+  'nytimes.com', 'bbc.com', 'cnn.com', 'reuters.com',
+  'nic.in', 'irctc.co.in', 'sbi.co.in', 'onlinesbi.com',
+]);
+
+/**
+ * Get base domain from a hostname (e.g. 'mail.google.com' → 'google.com')
+ */
+function getBaseDomain(hostname) {
+  const parts = hostname.replace(/^www\./, '').split('.');
+  const twoPartTlds = ['co.in','co.uk','co.au','com.au','co.nz','co.za','com.br','co.jp','or.jp','ne.jp','ac.uk','gov.uk','org.uk','gov.in','ac.in','edu.in','res.in'];
+  const last2 = parts.slice(-2).join('.');
+  if (twoPartTlds.includes(last2) && parts.length >= 3) {
+    return parts.slice(-3).join('.');
+  }
+  return parts.slice(-2).join('.');
+}
+
+/**
+ * Check if a hostname belongs to a trusted domain
+ */
+function isTrustedHost(hostname) {
+  if (!hostname) return false;
+  const base = getBaseDomain(hostname);
+  if (TRUSTED_DOMAINS.has(base)) return true;
+  const parts = hostname.split('.');
+  const tld = parts[parts.length - 1];
+  if (TRUSTED_TLDS.has(tld)) return true;
+  if (parts.length >= 2) {
+    const tld2 = parts.slice(-2).join('.');
+    if (TRUSTED_TLDS.has(tld2)) return true;
+  }
+  return false;
+}
+
 /**
  * Lightweight weighted dot-product + sigmoid scorer
  * Used when TF.js model is not available
  * @param {Float32Array} vector - Feature vector (length 42)
+ * @param {string} hostname - The hostname being scored
  * @returns {number} - Phishing probability [0, 1]
  */
-function weightedLinearScore(vector) {
+function weightedLinearScore(vector, hostname = '') {
+  if (hostname && isTrustedHost(hostname)) {
+    return 0.02;
+  }
   let dot = 0;
   for (let i = 0; i < vector.length; i++) {
     dot += vector[i] * FEATURE_WEIGHTS[i];
   }
-  // Bias term (calibrated on test set)
-  dot -= 3.2;
+  dot -= 6.5;
   return sigmoid(dot);
 }
 
@@ -195,10 +256,10 @@ export async function runInference(url) {
     console.warn('[PhishShield] Neural inference error:', err.message);
   }
 
-  // 3. Fallback: weighted linear model
+  // 3. Fallback: weighted linear model (pass hostname for trusted domain check)
   if (probability === null) {
     try {
-      probability = weightedLinearScore(features.vector);
+      probability = weightedLinearScore(features.vector, features.hostname || '');
       method = 'weighted';
     } catch {
       probability = null;
@@ -208,16 +269,25 @@ export async function runInference(url) {
   // 4. Rule-based score (always computed — used for XAI flags)
   const ruleResult = ruleBasedScore(features);
 
-  // 5. Blend ML probability with rule-based score
+  // 5. Trusted domain override — cap score at 10 for known-good domains
+  const hostname = features.hostname || '';
+  const isTrusted = isTrustedHost(hostname);
+
+  // 6. Blend ML probability with rule-based score
   let finalScore;
   if (probability !== null) {
     const mlScore   = Math.round(probability * 100);
     const ruleScore = ruleResult.score;
-    // Weighted blend: 60% ML, 40% rules (rules handle zero-day edge cases)
-    finalScore = Math.round(mlScore * 0.6 + ruleScore * 0.4);
+    // Weighted blend: 70% ML, 30% rules
+    finalScore = Math.round(mlScore * 0.7 + ruleScore * 0.3);
   } else {
     finalScore = ruleResult.score;
     method = 'rule-based';
+  }
+
+  // Cap trusted domain scores — they should never trigger warnings
+  if (isTrusted && finalScore > 10) {
+    finalScore = Math.min(finalScore, 10);
   }
 
   finalScore = Math.min(finalScore, 100);
@@ -226,7 +296,7 @@ export async function runInference(url) {
     score:       finalScore,
     probability: probability ?? (ruleResult.score / 100),
     level:       getLevel(finalScore),
-    flags:       ruleResult.flags,
+    flags:       isTrusted ? [] : ruleResult.flags,
     features,
     method,
   };
@@ -270,3 +340,5 @@ export function getTopFeatures(vector, topN = 5) {
     .sort((a, b) => b.contribution - a.contribution)
     .slice(0, topN);
 }
+
+export { isTrustedHost };

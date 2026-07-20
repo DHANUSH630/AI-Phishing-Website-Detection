@@ -32,7 +32,7 @@ const RISK_LEVELS = {
 
 const SKIPPED_SCHEMES = new Set([
   'chrome:', 'chrome-extension:', 'edge:', 'about:', 'data:',
-  'javascript:', 'file:', 'blob:', 'devtools:',
+  'javascript:', 'blob:', 'devtools:',
 ]);
 
 const STORAGE_KEYS = {
@@ -107,7 +107,7 @@ async function appendHistory(result) {
   // Build slim history entry
   const entry = {
     url:       result.url,
-    hostname:  new URL(result.url).hostname,
+    hostname:  (() => { try { return new URL(result.url).hostname || 'local-file'; } catch { return 'unknown'; } })(),
     score:     result.score,
     level:     result.level.key,
     method:    result.method,
@@ -355,16 +355,36 @@ function broadcastToTab(tabId, result) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function mergeDomFlags(tabId, domFlags) {
-  if (!scanCache.has(tabId)) return;
+  let result = scanCache.get(tabId);
 
-  const result = scanCache.get(tabId);
+  // If no URL scan result exists yet, create a baseline entry from DOM scan alone
+  if (!result) {
+    const tab = await chrome.tabs.get(tabId).catch(() => null);
+    const url = tab?.url || 'unknown';
+    result = {
+      url,
+      tabId,
+      score: 0,
+      probability: 0,
+      level: RISK_LEVELS.SAFE,
+      flags: [],
+      topFeatures: [],
+      method: 'dom-only',
+      domFlags: null,
+      timestamp: Date.now(),
+      meta: {
+        hostname: (() => { try { return new URL(url).hostname || 'local-file'; } catch { return 'unknown'; } })(),
+        hasHttps: url.startsWith('https'),
+      },
+    };
+  }
 
   // Merge DOM flags
   result.domFlags = domFlags;
 
   // Add DOM flags to the flags array
   const domFlagItems = domFlags.flags || [];
-  result.flags = [...result.flags, ...domFlagItems];
+  result.flags = [...(result.flags || []), ...domFlagItems];
 
   // Boost score based on DOM risk
   const boosted = Math.min(result.score + (domFlags.riskBoost || 0), 100);
@@ -376,10 +396,15 @@ async function mergeDomFlags(tabId, domFlags) {
   await chrome.storage.local.set({ [`scan_${tabId}`]: result });
   await updateBadge(tabId, boosted);
 
-  // If score crossed a threshold after DOM analysis, send notification
-  if (boosted > 30 && (result.score - (domFlags.riskBoost || 0)) <= 30) {
+  // If score is high enough, record in history and send notification
+  if (boosted > 30) {
+    await appendHistory(result);
+    await updateStats(result);
     sendNotification(result);
   }
+
+  // Broadcast updated result to content script so it can trigger overlay
+  broadcastToTab(tabId, result);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

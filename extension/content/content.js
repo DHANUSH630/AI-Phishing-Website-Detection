@@ -816,8 +816,23 @@
 
   setTimeout(() => {
     runDomScan().then(domFlags => {
+      // Send DOM flags to service worker for merging
       chrome.runtime.sendMessage({ type: 'DOM_FLAGS', payload: domFlags })
         .catch(() => {});
+
+      // Independently trigger overlay if DOM alone finds high risk
+      // (handles file:// URLs and pages where URL scan is low/absent)
+      if (domFlags.riskBoost >= 40) {
+        triggerOverlay({
+          url:         window.location.href,
+          score:       domFlags.riskBoost,
+          probability: domFlags.riskBoost / 100,
+          level:       { key: domFlags.riskBoost >= 61 ? 'DANGEROUS' : 'SUSPICIOUS', label: domFlags.riskBoost >= 61 ? 'Dangerous' : 'Suspicious' },
+          flags:       domFlags.flags || [],
+          method:      'dom-only',
+          domFlags,
+        });
+      }
     });
   }, 1200);
 

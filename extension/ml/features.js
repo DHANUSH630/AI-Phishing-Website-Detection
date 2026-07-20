@@ -56,8 +56,8 @@ const SAFE_TLDS = new Set(['com', 'org', 'net', 'edu', 'gov', 'io', 'co']);
  */
 function safeParseUrl(rawUrl) {
   try {
-    // Ensure protocol is present
-    if (!rawUrl.match(/^https?:\/\//i)) {
+    // Only prepend http:// if no recognized scheme is present
+    if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(rawUrl)) {
       rawUrl = 'http://' + rawUrl;
     }
     return new URL(rawUrl);
@@ -461,75 +461,78 @@ export function vectorToNamedObject(vector) {
  */
 export function ruleBasedScore(features) {
   const rules = [
+    // ── HIGH-CONFIDENCE phishing signals (weight 20-28) ──────────────────────
     { id: 'ip_addr',        weight: 28, active: features.hasIpAddress,
       label: 'IP Address URL',
       detail: 'Uses a raw IP address instead of a domain name — a classic phishing tactic.' },
 
-    { id: 'no_https',       weight: 20, active: !features.hasHttps,
-      label: 'No HTTPS Encryption',
-      detail: 'Site does not use HTTPS — your credentials can be intercepted in transit.' },
-
-    { id: 'at_symbol',      weight: 22, active: features.hasAtSymbol,
+    { id: 'at_symbol',      weight: 25, active: features.hasAtSymbol,
       label: '@ Symbol in URL',
       detail: 'The @ symbol tricks browsers into redirecting to a completely different host.' },
 
-    { id: 'brand_subdomain',weight: 18, active: features.hasBrandKeyword && features.subdomainDepth > 0,
-      label: 'Brand Name Spoofed in Subdomain',
-      detail: `Uses "${features.brandKeyword}" in the subdomain to appear legitimate while hiding the real domain.` },
-
-    { id: 'typosquat',      weight: 22, active: features.isTyposquat,
+    { id: 'typosquat',      weight: 24, active: features.isTyposquat,
       label: `Typosquatting: "${features.domain}" ≈ "${features.typosquatTarget}"`,
       detail: `Domain is only ${features.typosquatDistance} character(s) away from the real "${features.typosquatTarget}" brand. Likely impersonation.` },
+
+    { id: 'punycode',       weight: 22, active: features.hasPunycode,
+      label: 'Punycode / IDN Homoglyph Attack',
+      detail: 'Uses internationalized domain names (xn--) to mimic real domains with look-alike characters.' },
+
+    { id: 'brand_subdomain',weight: 20, active: features.hasBrandKeyword && features.subdomainDepth > 0,
+      label: 'Brand Name Spoofed in Subdomain',
+      detail: `Uses "${features.brandKeyword}" in the subdomain to appear legitimate while hiding the real domain.` },
 
     { id: 'multiple_tld',   weight: 20, active: features.hasMultipleTld,
       label: 'Fake Domain with Multiple TLDs',
       detail: 'Embeds a legitimate TLD (like .com) inside the subdomain to confuse users (e.g., paypal.com.attacker.xyz).' },
 
-    { id: 'rare_tld',       weight: 12, active: features.isRareTLD,
-      label: `Suspicious TLD (.${features.tld})`,
-      detail: `The .${features.tld} TLD is frequently registered for free and heavily abused by phishing campaigns.` },
-
-    { id: 'hex_encoding',   weight: 15, active: features.hasHexEncoding,
-      label: 'Hex-Encoded Characters',
-      detail: 'URL contains percent-encoded characters (%XX) often used to bypass security filters.' },
-
+    // ── MEDIUM-CONFIDENCE signals (weight 10-18) ─────────────────────────────
     { id: 'double_encoding',weight: 18, active: features.vector?.[20] === 1,
       label: 'Double URL Encoding',
       detail: 'URL is double-encoded (%25XX) — an advanced obfuscation technique used to evade filters.' },
 
-    { id: 'punycode',       weight: 20, active: features.hasPunycode,
-      label: 'Punycode / IDN Homoglyph Attack',
-      detail: 'Uses internationalized domain names (xn--) to mimic real domains with look-alike characters.' },
+    { id: 'hex_encoding',   weight: 14, active: features.hasHexEncoding,
+      label: 'Hex-Encoded Characters',
+      detail: 'URL contains percent-encoded characters (%XX) often used to bypass security filters.' },
 
     { id: 'redirect_param', weight: 14, active: features.hasRedirectParam,
       label: 'Open Redirect Parameter',
       detail: 'URL contains a redirect parameter (url=, next=, goto=) — can silently redirect you elsewhere.' },
 
-    { id: 'deep_subdomain', weight: 14, active: features.subdomainDepth > 3,
+    { id: 'rare_tld',       weight: 12, active: features.isRareTLD,
+      label: `Suspicious TLD (.${features.tld})`,
+      detail: `The .${features.tld} TLD is frequently registered for free and heavily abused by phishing campaigns.` },
+
+    { id: 'deep_subdomain', weight: 12, active: features.subdomainDepth > 3,
       label: 'Excessive Subdomain Depth',
       detail: `${features.subdomainDepth} subdomain levels detected — used to push the real domain out of view.` },
 
-    { id: 'susp_keyword',   weight: 10, active: !!features.suspiciousKeyword,
-      label: `Suspicious Keyword: "${features.suspiciousKeyword}"`,
-      detail: 'URL contains a keyword commonly used in phishing pages to appear official.' },
-
-    { id: 'long_url',       weight: 8,  active: features.urlLength > 100,
-      label: 'Excessively Long URL',
-      detail: `URL is ${features.urlLength} characters long — used to hide the real domain and confuse users.` },
-
-    { id: 'high_entropy',   weight: 10, active: features.entropy > 4.5,
-      label: 'High URL Entropy',
-      detail: `Entropy score ${features.entropy.toFixed(2)} — the URL contains randomized or obfuscated segments.` },
-
-    { id: 'base64',         weight: 12, active: features.hasBase64Pattern,
+    { id: 'base64',         weight: 10, active: features.hasBase64Pattern,
       label: 'Base64-Encoded Segment',
       detail: 'A long encoded segment in the path is typically used to hide tracking tokens or obfuscated commands.' },
 
-    { id: 'double_slash',   weight: 10, active: features.hasDoubleSlash,
+    // ── LOW-CONFIDENCE signals (weight 3-8) — only flag, do not heavily score ─
+    { id: 'no_https',       weight: 5,  active: !features.hasHttps,
+      label: 'No HTTPS Encryption',
+      detail: 'Site does not use HTTPS — your credentials can be intercepted in transit.' },
+
+    { id: 'susp_keyword',   weight: 4,  active: !!features.suspiciousKeyword,
+      label: `Suspicious Keyword: "${features.suspiciousKeyword}"`,
+      detail: 'URL contains a keyword commonly used in phishing pages to appear official.' },
+
+    { id: 'long_url',       weight: 4,  active: features.urlLength > 120,
+      label: 'Excessively Long URL',
+      detail: `URL is ${features.urlLength} characters long — used to hide the real domain and confuse users.` },
+
+    { id: 'high_entropy',   weight: 4,  active: features.entropy > 4.8,
+      label: 'High URL Entropy',
+      detail: `Entropy score ${features.entropy.toFixed(2)} — the URL contains randomized or obfuscated segments.` },
+
+    { id: 'double_slash',   weight: 4,  active: features.hasDoubleSlash,
       label: 'Double Slash in Path',
       detail: 'Unusual double-slash sequences in the URL path can confuse parsers and indicate manipulation.' },
 
-    { id: 'consec_hyphens', weight: 8,  active: features.hasConsecHyphens,
+    { id: 'consec_hyphens', weight: 3,  active: features.hasConsecHyphens,
       label: 'Consecutive Hyphens in Domain',
       detail: 'Consecutive hyphens (--) are a common indicator of domain name abuse.' },
   ];
