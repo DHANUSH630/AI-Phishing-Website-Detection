@@ -4,9 +4,16 @@
   "version": "1.0.0",
   "description": "Real-time AI-powered phishing detection. Explains why sites are suspicious, identifies fake login forms, and predicts zero-day attacks using machine learning.",
   "author": "AI Phishing Shield Team",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "aiphishingshield@dhanush.dev",
+      "strict_min_version": "109.0"
+    }
+  },
 
   "icons": {
     "16":  "icons/icon16.png",
+    "32":  "icons/icon32.png",
     "48":  "icons/icon48.png",
     "128": "icons/icon128.png"
   },
@@ -15,6 +22,7 @@
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16":  "icons/icon16.png",
+      "32":  "icons/icon32.png",
       "48":  "icons/icon48.png",
       "128": "icons/icon128.png"
     },

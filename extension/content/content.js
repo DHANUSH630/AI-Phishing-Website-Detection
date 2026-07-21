@@ -57,7 +57,18 @@
     'facebook.com', 'twitter.com', 'x.com', 'instagram.com', 'linkedin.com',
     'netflix.com', 'yahoo.com', 'bing.com', 'outlook.com', 'live.com',
     'office.com', 'zoom.us', 'slack.com', 'dropbox.com', 'icloud.com',
-    'nic.in', 'irctc.co.in', 'sbi.co.in', 'onlinesbi.com'
+    'nic.in', 'irctc.co.in', 'sbi.co.in', 'onlinesbi.com',
+    // Payment Gateways & Card Processors
+    'stripe.com', 'stripe.network', 'razorpay.com', 'razorpay.in',
+    'paytm.com', 'paytmbank.com', 'billdesk.com', 'ccavenue.com',
+    'instamojo.com', 'phonepe.com', 'adyen.com', 'checkout.com',
+    'braintreegateway.com', 'braintreedata.com', 'authorizenet.com',
+    'squareup.com', 'squareupsandbox.com', 'bill.com',
+    'visa.com', 'mastercard.com', 'americanexpress.com', 'rupay.co.in',
+    'discover.com', 'shopify.com', 'fastspring.com', 'paddle.com', 'gumroad.com',
+    // Official Registration & Certifications
+    'pearson.com', 'pearsonvue.com', 'udemy.com', 'coursera.org', 'edx.org',
+    'pluralsight.com', 'cisco.com', 'comptia.org', 'redhat.com'
   ]);
 
   const TRUSTED_TLDS = new Set([

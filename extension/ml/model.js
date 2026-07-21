@@ -164,6 +164,17 @@ const TRUSTED_DOMAINS = new Set([
   'spotify.com', 'samsung.com', 'intel.com', 'nvidia.com',
   'nytimes.com', 'bbc.com', 'cnn.com', 'reuters.com',
   'nic.in', 'irctc.co.in', 'sbi.co.in', 'onlinesbi.com',
+  // Payment Gateways & Card Processors
+  'stripe.com', 'stripe.network', 'razorpay.com', 'razorpay.in',
+  'paytm.com', 'paytmbank.com', 'billdesk.com', 'ccavenue.com',
+  'instamojo.com', 'phonepe.com', 'adyen.com', 'checkout.com',
+  'braintreegateway.com', 'braintreedata.com', 'authorizenet.com',
+  'squareup.com', 'squareupsandbox.com', 'bill.com',
+  'visa.com', 'mastercard.com', 'americanexpress.com', 'rupay.co.in',
+  'discover.com', 'shopify.com', 'fastspring.com', 'paddle.com', 'gumroad.com',
+  // Official Registration & Certifications
+  'pearson.com', 'pearsonvue.com', 'udemy.com', 'coursera.org', 'edx.org',
+  'pluralsight.com', 'cisco.com', 'comptia.org', 'redhat.com'
 ]);
 
 /**

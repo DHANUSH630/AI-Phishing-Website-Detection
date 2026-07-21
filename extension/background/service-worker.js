@@ -223,14 +223,26 @@ function extractHostname(url) {
   catch { return url.toLowerCase(); }
 }
 
+function isMatchInSet(hostname, set) {
+  if (!hostname) return false;
+  if (set.has(hostname)) return true;
+  const parts = hostname.split('.');
+  for (let i = 1; i < parts.length; i++) {
+    const parent = parts.slice(i).join('.');
+    if (set.has(parent)) return true;
+  }
+  return false;
+}
+
 function isAllowListed(url) {
   const host = extractHostname(url);
-  return allowList.has(host);
+  return isMatchInSet(host, allowList);
 }
 
 function isBlockListed(url) {
   const host = extractHostname(url);
-  return blockList.has(host);
+  if (isMatchInSet(host, allowList)) return false;
+  return isMatchInSet(host, blockList);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -393,7 +405,8 @@ async function mergeDomFlags(tabId, domFlags) {
   result.domFlags = domFlags;
 
   const hostname = result.meta?.hostname || extractHostname(result.url) || '';
-  const isTrusted = isTrustedHost(hostname);
+  const isBlocked = isBlockListed(result.url);
+  const isTrusted = isTrustedHost(hostname) && !isBlocked;
 
   // Add DOM flags to the flags array if not a trusted host
   if (!isTrusted) {
