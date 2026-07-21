@@ -458,9 +458,7 @@ $('btn-reset-settings')?.addEventListener('click', async () => {
 
 // Support & Donations (Razorpay)
 $('btn-donate')?.addEventListener('click', () => {
-  // TODO: Replace with your actual Razorpay Payment Button/Page URL from dashboard!
-  // Example: https://pages.razorpay.com/pl_yourdonationid
-  const razorpayPageUrl = 'https://pages.razorpay.com/pl_yourdonationid';
+  const razorpayPageUrl = 'https://rzp.io/rzp/9m6Yuye';
   chrome.tabs.create({ url: razorpayPageUrl });
 });
 

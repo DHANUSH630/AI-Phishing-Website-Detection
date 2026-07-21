@@ -755,8 +755,7 @@ $('btn-clear-all')?.addEventListener('click', async () => {
 
 // Sidebar Razorpay Donation click handler
 $('sidebar-donate-btn')?.addEventListener('click', () => {
-  // TODO: Replace with your actual Razorpay Payment Page/Button URL!
-  const razorpayPageUrl = 'https://pages.razorpay.com/pl_yourdonationid';
+  const razorpayPageUrl = 'https://rzp.io/rzp/9m6Yuye';
   chrome.tabs.create({ url: razorpayPageUrl });
 });
 
