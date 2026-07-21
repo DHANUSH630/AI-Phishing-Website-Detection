@@ -456,6 +456,14 @@ $('btn-reset-settings')?.addEventListener('click', async () => {
   toast('Settings reset to defaults ✓');
 });
 
+// Support & Donations (Razorpay)
+$('btn-donate')?.addEventListener('click', () => {
+  // TODO: Replace with your actual Razorpay Payment Button/Page URL from dashboard!
+  // Example: https://pages.razorpay.com/pl_yourdonationid
+  const razorpayPageUrl = 'https://pages.razorpay.com/pl_yourdonationid';
+  chrome.tabs.create({ url: razorpayPageUrl });
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SCAN TAB ACTIONS
 // ═══════════════════════════════════════════════════════════════════════════════

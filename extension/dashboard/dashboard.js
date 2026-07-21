@@ -753,6 +753,13 @@ $('btn-clear-all')?.addEventListener('click', async () => {
   toast('✓ History cleared');
 });
 
+// Sidebar Razorpay Donation click handler
+$('sidebar-donate-btn')?.addEventListener('click', () => {
+  // TODO: Replace with your actual Razorpay Payment Page/Button URL!
+  const razorpayPageUrl = 'https://pages.razorpay.com/pl_yourdonationid';
+  chrome.tabs.create({ url: razorpayPageUrl });
+});
+
 // ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════

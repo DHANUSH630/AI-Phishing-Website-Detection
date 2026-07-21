@@ -46,8 +46,14 @@
       </a>
     </nav>
 
-    <div class="sidebar-footer">
-      <div class="shield-status" id="shield-status">
+    <div class="sidebar-footer" style="padding: 16px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border);">
+      <button id="sidebar-donate-btn" style="background: linear-gradient(135deg, #0b72e7 0%, #1c4fd8 100%); color: #fff; border: none; font-size: 10.5px; font-weight: 700; padding: 7px 12px; border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; transition: all 0.2s; box-shadow: 0 4px 12px rgba(11,114,231,0.15);">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-top: 1px;">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        Donate via Razorpay
+      </button>
+      <div class="shield-status" id="shield-status" style="margin: 0; padding: 0; border: none; background: none;">
         <span class="status-dot green"></span>
         <span>Shield Active</span>
       </div>
